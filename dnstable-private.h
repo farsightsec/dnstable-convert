@@ -45,11 +45,6 @@
 #include <mtbl.h>
 #include <wdns.h>
 
-#ifdef HAVE_YAJL_1
-# include <yajl/yajl_gen.h>
-#else
-# include <yajl_gen.h>
-#endif
 
 #include "dnstable.h"
 
@@ -66,43 +61,5 @@
 
 #define DNS_MTBL_BLOCK_SIZE			8192
 #define DNSSEC_MTBL_BLOCK_SIZE			65536
-
-/* best clock for my_gettime() */
-
-#if defined(CLOCK_MONOTONIC_COARSE)
-# define DNSTABLE__CLOCK_MONOTONIC CLOCK_MONOTONIC_COARSE
-#elif defined(CLOCK_MONOTONIC)
-# define DNSTABLE__CLOCK_MONOTONIC CLOCK_MONOTONIC
-#else
-# error Neither CLOCK_MONOTONIC nor CLOCK_MONOTONIC_COARSE are available.
-#endif
-
-/* triplet */
-
-size_t
-triplet_pack(uint8_t *, uint64_t, uint64_t, uint64_t);
-
-dnstable_res
-triplet_unpack(const uint8_t *, size_t, uint64_t *, uint64_t *, uint64_t *);
-
-/* misc */
-
-static inline int
-bytes_compare(const uint8_t *a, size_t len_a,
-	      const uint8_t *b, size_t len_b)
-{
-	size_t len = len_a > len_b ? len_b : len_a;
-	int ret = memcmp(a, b, len);
-	if (ret == 0) {
-		if (len_a < len_b) {
-			return (-1);
-		} else if (len_a == len_b) {
-			return (0);
-		} else if (len_a > len_b) {
-			return (1);
-		}
-	}
-	return (ret);
-}
 
 #endif /* DNSTABLE_PRIVATE_H */
