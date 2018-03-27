@@ -9,7 +9,13 @@ AM_CFLAGS = ${my_CFLAGS} \
 	$(libwdns_CFLAGS)
 
 bin_PROGRAMS = dnstable_convert
-dnstable_convert_SOURCES = dnstable_convert.c
+dnstable_convert_SOURCES = dnstable_convert.c \
+	libmy/vector.h \
+	libmy/ubuf.h \
+	libmy/my_alloc.h \
+	libmy/my_byteorder.h \
+	dnstable-private.h
+
 dnstable_convert_LDADD = \
 	$(libdnstable_LIBS) \
 	$(libmtbl_LIBS) \
@@ -34,10 +40,8 @@ ASCIIDOC_PROCESS = $(AM_V_GEN) $(ASCIIDOC) -f manpage --no-xmllint --asciidoc-op
 	$(ASCIIDOC_PROCESS)
 
 dist_man_MANS = \
-	man/dnstable-encoding.5 \
 	man/dnstable_convert.1
 endif
 
 EXTRA_DIST += \
-	man/dnstable-encoding.5.txt \
 	man/dnstable_convert.1.txt

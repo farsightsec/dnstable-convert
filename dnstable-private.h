@@ -45,21 +45,12 @@
 #include <mtbl.h>
 #include <wdns.h>
 
-
-#include "dnstable.h"
-
-#include "libmy/my_alloc.h"
-#include "libmy/my_time.h"
-#include "libmy/ubuf.h"
+/* This is a subset of the dnstable repo's dnstable-private.h with
+ * just the content needed for dnstable_convert */
 
 #define ENTRY_TYPE_RRSET			'\x00'
 #define ENTRY_TYPE_RRSET_NAME_FWD		'\x01'
 #define ENTRY_TYPE_RDATA			'\x02'
 #define ENTRY_TYPE_RDATA_NAME_REV		'\x03'
-
-#define STATS_INTERVAL				1000000
-
-#define DNS_MTBL_BLOCK_SIZE			8192
-#define DNSSEC_MTBL_BLOCK_SIZE			65536
 
 #endif /* DNSTABLE_PRIVATE_H */

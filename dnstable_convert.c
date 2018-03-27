@@ -54,6 +54,11 @@ static uint64_t			count_entries;
 static uint64_t			count_entries_dnssec;
 static uint64_t			count_entries_merged;
 
+#define STATS_INTERVAL				1000000
+
+#define DNS_MTBL_BLOCK_SIZE			8192
+#define DNSSEC_MTBL_BLOCK_SIZE			65536
+
 static void
 do_stats(void)
 {
