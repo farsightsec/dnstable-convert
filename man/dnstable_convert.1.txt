@@ -22,3 +22,9 @@ The output files produced by ^dnstable_convert^ are suitable for use with other
 dnstable tools like ^dnstable_dump^(1) and ^dnstable_merge^(1), or with the
 ^dnstable_reader^(3) API. Since they are in MTBL format, they can also be read
 with the ^mtbl_reader^(3) API.
+
+By default, ^dnstable_convert^ will use ^/var/tmp/^ to store temporary
+mtbl files.  Sometimes there may not be sufficient space in the
+default location or you may want to use a RAM-based filesystem to cut
+down on I/O costs.  The optional 'VARTMPDIR' environment variable can
+be set to override the location.
