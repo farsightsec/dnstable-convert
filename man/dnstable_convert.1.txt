@@ -24,7 +24,7 @@ dnstable tools like ^dnstable_dump^(1) and ^dnstable_merge^(1), or with the
 with the ^mtbl_reader^(3) API.
 
 By default, ^dnstable_convert^ will use ^/var/tmp/^ to store temporary
-mtbl files.  Sometimes there may not be sufficient space in the
-default location or you may want to use a RAM-based filesystem to cut
-down on I/O costs.  The optional 'VARTMPDIR' environment variable can
-be set to override the location.
+mtbl files.  The optional 'VARTMPDIR' environment variable can
+be set to override the location.  Specifying a filesystem for RAM-based
+storage or specifying the same filesystem as the source data file might
+be useful.
