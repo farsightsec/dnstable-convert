@@ -35,6 +35,12 @@ AC_CHECK_HEADERS([nmsg/sie/dnsdedupe.pb-c.h],
                  [AC_MSG_ERROR([required header file not found])])
 CPPFLAGS=$CPPFLAGS_SAVED
 
+AX_PTHREAD([
+	LIBS="$PTHREAD_LIBS $LIBS"
+	CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+	CC="$PTHREAD_CC"
+])
+
 AC_PATH_PROG([ASCIIDOC], [a2x])
 AM_CONDITIONAL([BUILD_MAN], [test -n "$ASCIIDOC"])
 if test -n "$ASCIIDOC"; then
