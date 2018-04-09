@@ -18,5 +18,5 @@ Build-Depends:
 
 Package: dnstable-convert
 Architecture: any
-Depends: mtbl-bin, nmsg-msg-module-sie, ${misc:Depends}, ${shlibs:Depends}
+Depends: nmsg-msg-module-sie, ${misc:Depends}, ${shlibs:Depends}
 Description: Utility to convert passive DNS data from NMSG format to MTBL format.
