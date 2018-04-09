@@ -28,9 +28,12 @@ PKG_CHECK_MODULES([libwdns], [libwdns])
 AC_CHECK_HEADER([ldns/ldns.h])
 AC_CHECK_LIB([ldns], [ldns_version])
 
+CPPFLAGS_SAVED=$CPPFLAGS
+CPPFLAGS="$pkg_cv_libnmsg_CFLAGS $CPPFLAGS"
 AC_CHECK_HEADERS([nmsg/sie/dnsdedupe.pb-c.h],
                  [],
                  [AC_MSG_ERROR([required header file not found])])
+CPPFLAGS=$CPPFLAGS_SAVED
 
 AC_PATH_PROG([ASCIIDOC], [a2x])
 AM_CONDITIONAL([BUILD_MAN], [test -n "$ASCIIDOC"])
