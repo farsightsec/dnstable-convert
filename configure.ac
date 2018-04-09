@@ -25,9 +25,6 @@ PKG_CHECK_MODULES([libnmsg], [libnmsg])
 PKG_CHECK_MODULES([libmtbl], [libmtbl])
 PKG_CHECK_MODULES([libwdns], [libwdns])
 
-AC_CHECK_HEADER([ldns/ldns.h])
-AC_CHECK_LIB([ldns], [ldns_version])
-
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$pkg_cv_libnmsg_CFLAGS $CPPFLAGS"
 AC_CHECK_HEADERS([nmsg/sie/dnsdedupe.pb-c.h],
