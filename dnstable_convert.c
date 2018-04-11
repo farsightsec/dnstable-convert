@@ -262,10 +262,10 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 
 	switch (dns->rrtype) {
 	case WDNS_TYPE_MX:
-		offset = 2;
+		offset = 2;	/* skip MX preference */
 		break;
 	case WDNS_TYPE_SRV:
-		offset = 6;
+		offset = 6;	/* skip SRV priority, weight, port */
 		break;
 	default:
 		return;
@@ -329,15 +329,15 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 		offset = 0;
 		break;
 	case WDNS_TYPE_MX:
-		offset = 2;
+		offset = 2;	/* skip MX preference */
 		len -= offset;
 		break;
 	case WDNS_TYPE_SRV:
-		offset = 6;
+		offset = 6;	/* skip SRV priority, weight, port */
 		len -= offset;
 		break;
 	default:
-		return;
+		return;		/* Other rrtypes are not indexed by name. */
 	}
 
 	if (dns->rdata[i].len == 0 || dns->rdata[i].len <= offset)
