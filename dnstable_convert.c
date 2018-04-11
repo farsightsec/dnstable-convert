@@ -524,12 +524,17 @@ init_mtbl(void)
 
 	mtbl_writer_options_set_block_size(wopt, DNS_MTBL_BLOCK_SIZE);
 	writer = mtbl_writer_init(db_fname, wopt);
+	if (writer == NULL) {
+		perror(db_fname);
+		exit(EXIT_FAILURE);
+	}
 
 	mtbl_writer_options_set_block_size(wopt, DNSSEC_MTBL_BLOCK_SIZE);
 	writer_dnssec = mtbl_writer_init(db_dnssec_fname, wopt);
-
-	assert(writer != NULL);
-	assert(writer_dnssec != NULL);
+	if (writer_dnssec == NULL) {
+		perror(db_dnssec_fname);
+		exit(EXIT_FAILURE);
+	}
 
 	sorter = mtbl_sorter_init(sopt);
 	sorter_dnssec = mtbl_sorter_init(sopt);
