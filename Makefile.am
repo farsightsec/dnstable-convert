@@ -41,10 +41,10 @@ ASCIIDOC_PROCESS = $(AM_V_GEN) $(ASCIIDOC) -f manpage --no-xmllint --asciidoc-op
 
 .7.txt.7:
 	$(ASCIIDOC_PROCESS)
+endif
 
 dist_man_MANS = \
 	man/dnstable_convert.1
-endif
 
 EXTRA_DIST += \
 	man/dnstable_convert.1.txt
