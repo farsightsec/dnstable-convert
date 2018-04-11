@@ -265,7 +265,7 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 		offset = 2;
 		break;
 	case WDNS_TYPE_SRV:
-		offset = 2;
+		offset = 6;
 		break;
 	default:
 		return;
