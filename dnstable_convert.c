@@ -262,10 +262,10 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 
 	switch (dns->rrtype) {
 	case WDNS_TYPE_MX:
-		offset = 2;
+		offset = 2;	/* skip MX preference */
 		break;
 	case WDNS_TYPE_SRV:
-		offset = 2;
+		offset = 6;	/* skip SRV priority, weight, port */
 		break;
 	default:
 		return;
@@ -310,11 +310,20 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 static void
 process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 {
-	size_t offset;
+	size_t offset, len = dns->rdata[i].len;
 	uint8_t name[WDNS_MAXLEN_NAME];
 	wdns_res res;
 
 	switch (dns->rrtype) {
+	case WDNS_TYPE_SOA:
+		if (len == 0)
+			return;
+		res = wdns_len_uname(dns->rdata[i].data,
+				     dns->rdata[i].data + len,
+				     &len);
+		if (res != wdns_res_success)
+			return;
+		/* fallthrough */
 	case WDNS_TYPE_NS:
 	case WDNS_TYPE_CNAME:
 	case WDNS_TYPE_DNAME:
@@ -322,13 +331,15 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 		offset = 0;
 		break;
 	case WDNS_TYPE_MX:
-		offset = 2;
+		offset = 2;	/* skip MX preference */
+		len -= offset;
 		break;
 	case WDNS_TYPE_SRV:
-		offset = 6;
+		offset = 6;	/* skip SRV priority, weight, port */
+		len -= offset;
 		break;
 	default:
-		return;
+		return;		/* Other rrtypes are not indexed by name. */
 	}
 
 	if (dns->rdata[i].len == 0 || dns->rdata[i].len <= offset)
@@ -342,9 +353,9 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 	ubuf_add(key, ENTRY_TYPE_RDATA_NAME_REV);
 
 	/* key: rdata name (label-reversed) */
-	res = wdns_reverse_name(dns->rdata[i].data + offset, dns->rdata[i].len - offset, name);
+	res = wdns_reverse_name(dns->rdata[i].data + offset, len, name);
 	assert(res == wdns_res_success);
-	ubuf_append(key, name, dns->rdata[i].len - offset);
+	ubuf_append(key, name, len);
 
 	add_entry(dns, key, val);
 }
