@@ -321,7 +321,6 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 				     &len);
 		if (res != wdns_res_success)
 			return;
-		printf("SOA record found, len=%zd\n", len);
 		/* fallthrough */
 	case WDNS_TYPE_NS:
 	case WDNS_TYPE_CNAME:
