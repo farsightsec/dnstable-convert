@@ -18,6 +18,10 @@ records. (Specifically, all resource records of type DS, RRSIG, NSEC, DNSKEY,
 NSEC3, NSEC3PARAM, and DLV are stored in the 'DB-DNSSEC-FILE', and resource
 records of all other types are stored in the 'DB-FILE'.)
 
+^dnstable_convert^ will create both the 'DB-FILE' and 'DB-DNSSEC-FILE', and
+will abort if either exists. If the input file contains no DNSSEC-related
+records, 'DB-DNSSEC-FILE' will be removed.
+
 The output files produced by ^dnstable_convert^ are suitable for use with other
 dnstable tools like ^dnstable_dump^(1) and ^dnstable_merge^(1), or with the
 ^dnstable_reader^(3) API. Since they are in MTBL format, they can also be read
