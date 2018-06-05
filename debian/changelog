@@ -1,6 +1,6 @@
-dnstable-convert (0.1.0-0) wheezy-fsi; urgency=medium
+dnstable-convert (0.10.0-1) wheezy-farsightsec; urgency=medium
 
-  * Separate dnstable-convert from dnstable repository version 0.9.1-3
+  * Initial release of dnstable-convert which separates dnstable_convert
+    from dnstable repository version 0.9.1-3
 
- -- Farsight Security, Inc. <software@farsightsecurity.com>  Thu, 22 Mar 2018 10:00:00 -0500
-
+ -- Farsight Security, Inc. <software@farsightsecurity.com>  Tue, 05 Jun 2018 10:07:26 -0500
