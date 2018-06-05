@@ -1,6 +1,8 @@
-dnstable-convert (0.1.0)
+dnstable-convert (0.10.0)
 
-  * Separate dnstable-convert from dnstable repository version 0.9.1-3
+  * Separate dnstable_convert from dnstable repository version 0.9.1-3
 
- -- David Waitzman <djw@fsi.io>  Thu, 22 Mar 2018 10:00:00 -0500
+  * Fix SRV encoding error, and missing SOA mname indexing.
+
+ -- Farsight Security, Inc. <software@farsightsecurity.com>  Tue, 05 Jun 2018 10:07:26 -0500
 
