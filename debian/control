@@ -2,7 +2,7 @@ Source: dnstable-convert
 Maintainer: Farsight Security, Inc. <software@farsightsecurity.com>
 Section: utils
 Priority: optional
-Standards-Version: 3.9.5
+Standards-Version: 3.9.8
 Build-Depends:
  asciidoc,
  debhelper (>= 9~),
@@ -14,7 +14,7 @@ Build-Depends:
  libwdns-dev (>= 0.6.0),
  nmsg-msg-module-sie-dev (>= 0.17.0-2),
  pkg-config,
- xmlto,
+ xmlto
 
 Package: dnstable-convert
 Architecture: any
@@ -22,3 +22,6 @@ Depends: nmsg-msg-module-sie, ${misc:Depends}, ${shlibs:Depends}
 Replaces: dnstable-bin (<< 0.9.1-3)
 Breaks: dnstable-bin (<< 0.9.1-3)
 Description: Utility to convert passive DNS data from NMSG format to MTBL format.
+ .
+ dnstable_convert converts passive DNS data from NMSG data encoded using the
+ SIE/dnsdedupe message schema to MTBL files for plain DNS and for DNSSEC.
