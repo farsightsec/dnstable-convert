@@ -1,5 +1,6 @@
 EXTRA_DIST = COPYRIGHT LICENSE README.md
 CLEANFILES =
+DISTCLEANFILES =
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
 AM_CPPFLAGS = -include $(top_builddir)/config.h
@@ -64,3 +65,24 @@ dist_man_MANS = \
 EXTRA_DIST += \
 	man/dnstable_convert.1.txt \
 	man/dnstable_unconvert.1.txt
+
+TESTS = tests/tests.sh
+EXTRA_DIST += \
+	tests/srv.dnsdedupe.json \
+	tests/srv.dnsdedupe.nmsg \
+	tests/broken-srv.dns.mtbl \
+	tests/dnstable_convert.output1 \
+	tests/dnstable_dump.rdata.output1 \
+	tests/dnstable_dump.rrset.output1 \
+	tests/dnstable_lookup.rdata.name.output1
+DISTCLEANFILES += \
+	tests/srv.dns.mtbl \
+	tests/dnstable_convert.output1.tmp \
+	tests/dnstable_dump.rdata.output1.tmp \
+	tests/dnstable_dump.rdata.output2.tmp \
+	tests/dnstable_dump.rrset.output1.tmp \
+	tests/dnstable_dump.rrset.output2.tmp \
+	tests/dnstable_lookup.rdata.name.output1.tmp \
+	tests/dnstable_lookup.rdata.name.output2.tmp
+
+check_PROGRAMS =
