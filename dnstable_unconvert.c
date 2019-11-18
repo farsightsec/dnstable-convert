@@ -144,9 +144,21 @@ static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *dat
 	 *      whereas the underlying count value is set to zero for
 	 *      INSERTION records.
 	 */
-	data += mtbl_varint_decode32(data, &nm_time_first);
-	data += mtbl_varint_decode32(data, &nm_time_last);
-	data += mtbl_varint_decode32(data, &nm_count);
+
+#define decode(v) do {							\
+	unsigned vi_len = mtbl_varint_length_packed(data, len_data);	\
+	uint64_t vi_val;						\
+	assert(vi_len > 0);						\
+	len_data -= vi_len;						\
+	data += mtbl_varint_decode64(data, &vi_val);			\
+	v = (uint32_t)vi_val;						\
+} while(0);
+
+	decode(nm_time_first);
+	decode(nm_time_last);
+	decode(nm_count);
+
+#undef decode
 
 	nres = nmsg_message_set_field(m, "time_first", 0,
 					(const uint8_t *)&nm_time_first,
