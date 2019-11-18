@@ -25,6 +25,20 @@ dnstable_convert_LDADD = \
 	$(libnmsg_LIBS) \
 	$(libwdns_LIBS) 
 
+bin_PROGRAMS += dnstable_unconvert
+
+dnstable_unconvert_SOURCES = dnstable_unconvert.c
+
+dnstable_unconvert_CFLAGS = $(libnmsg_CFLAGS) $(libdnstable_CFLAGS) \
+			  $(libmtbl_CFLAGS) $(libwdns_CFLAGS)
+
+dnstable_unconvert_LDADD = \
+	$(libdnstable_LIBS) \
+	$(libmtbl_LIBS) \
+	$(libnmsg_LIBS) \
+	$(libwdns_LIBS) 
+
+
 if BUILD_MAN
 SUFFIXES = .1.txt .3.txt .5.txt .7.txt .1 .3 .5 .7
 
@@ -44,7 +58,9 @@ ASCIIDOC_PROCESS = $(AM_V_GEN) $(ASCIIDOC) -f manpage --no-xmllint --asciidoc-op
 endif
 
 dist_man_MANS = \
-	man/dnstable_convert.1
+	man/dnstable_convert.1 \
+	man/dnstable_unconvert.1
 
 EXTRA_DIST += \
-	man/dnstable_convert.1.txt
+	man/dnstable_convert.1.txt \
+	man/dnstable_unconvert.1.txt
