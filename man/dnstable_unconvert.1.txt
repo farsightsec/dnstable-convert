@@ -6,10 +6,12 @@ dnstable_unconvert - convert dnstable MTBL data to passive DNS NMSG format
 
 == SYNOPSIS ==
 
-^dnstable_convert^ 'DB-FILE' 'NMSG-FILE'
+^dnstable_unconvert^ 'DB-FILE' 'NMSG-FILE'
 
 == DESCRIPTION ==
 
 Converts passive DNS data from MTBL format to NMSG format.  The RRSET entries
 in the dnstable MTBL file 'DB-FILE' are converted to NMSG 'sie:dnsdedupe' format
 and written to the output file 'NMSG-FILE'.
+
+^dnstable_unconvert^ will create the file 'NMSG-FILE', which must not exist.

@@ -31,7 +31,9 @@
 dnstable_unconvert \- convert dnstable MTBL data to passive DNS NMSG format
 .SH "SYNOPSIS"
 .sp
-\fBdnstable_convert\fR \fIDB\-FILE\fR \fINMSG\-FILE\fR
+\fBdnstable_unconvert\fR \fIDB\-FILE\fR \fINMSG\-FILE\fR
 .SH "DESCRIPTION"
 .sp
 Converts passive DNS data from MTBL format to NMSG format\&. The RRSET entries in the dnstable MTBL file \fIDB\-FILE\fR are converted to NMSG \fIsie:dnsdedupe\fR format and written to the output file \fINMSG\-FILE\fR\&.
+.sp
+\fBdnstable_unconvert\fR will create the file \fINMSG\-FILE\fR, which must not exist\&.
