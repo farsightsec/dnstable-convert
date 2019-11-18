@@ -133,6 +133,17 @@ static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *dat
 		assert(nres == nmsg_res_success);
 	}
 
+	/*
+	 * We decode the value triplet here instead of using the dnstable_entry
+	 * times and counts for two reasons:
+	 *
+	 *   1) The dnstable entry values are 64-bit integers, whereas the
+	 *      nmsg fields are 32 bit integers.
+	 *
+	 *   2) The dnstable_entry count will never be presented as zero,
+	 *      whereas the underlying count value is set to zero for
+	 *      INSERTION records.
+	 */
 	data += mtbl_varint_decode32(data, &nm_time_first);
 	data += mtbl_varint_decode32(data, &nm_time_last);
 	data += mtbl_varint_decode32(data, &nm_count);
