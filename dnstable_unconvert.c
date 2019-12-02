@@ -25,6 +25,7 @@
 #include <dnstable.h>
 #include <mtbl.h>
 #include <nmsg.h>
+#include <nmsg/sie/dnsdedupe.pb-c.h>
 #include <wdns.h>
 
 static nmsg_message_t entry_to_nmsg(struct dnstable_entry *, const uint8_t *, size_t);
@@ -95,6 +96,7 @@ static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *dat
 	size_t len_rrname, len_bailiwick;
 	uint16_t rrtype;
 	uint16_t rrclass = WDNS_CLASS_IN;
+	uint32_t msgtype = NMSG__SIE__DNS_DEDUPE_TYPE__EXPIRATION;
 	size_t i, n_rdata;
 	dnstable_res dres;
 	nmsg_res nres;
@@ -171,6 +173,14 @@ static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *dat
 	nres = nmsg_message_set_field(m, "count", 0,
 					(const uint8_t *)&nm_count,
 					sizeof(nm_count));
+	assert(nres == nmsg_res_success);
+
+	if (nm_count == 0)
+		msgtype = NMSG__SIE__DNS_DEDUPE_TYPE__INSERTION;
+
+	nres = nmsg_message_set_field(m, "type", 0,
+					(const uint8_t *)&msgtype,
+					sizeof(msgtype));
 	assert(nres == nmsg_res_success);
 
 	return m;
