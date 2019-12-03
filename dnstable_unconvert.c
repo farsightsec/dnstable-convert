@@ -31,20 +31,38 @@
 static nmsg_message_t entry_to_nmsg(struct dnstable_entry *, const uint8_t *, size_t);
 static nmsg_msgmod_t sie_dnsdedupe;
 
+static void usage(const char *progname) {
+	fprintf(stderr, "Usage: %s [-z] <input.mtbl> <output.nmsg>\n", progname);
+	exit(1);
+}
+
 int main(int ac, char **av) {
-	int fd;
+	int c, fd;
 	nmsg_output_t out;
 	nmsg_res nres;
+	bool zlibout = false;
+	const char *progname = av[0];
 
 	struct mtbl_reader *r;
 	struct mtbl_iter *it;
 	const uint8_t *key, *val;
 	size_t i, len_key, len_val;
 
-	if (ac != 3) {
-		fprintf(stderr, "Usage: %s <input.mtbl> <output.nmsg>\n", av[0]);
-		exit(1);
+	while ((c = getopt(ac, av, "z")) != -1) {
+		switch(c) {
+		case 'z':
+			zlibout = true;
+			break;
+		default:
+			usage(progname);
+		}
 	}
+
+	ac -= optind;
+	av += optind;
+
+	if (ac != 2)
+		usage(progname);
 
 	nres = nmsg_init();
 	assert(nres == nmsg_res_success);
@@ -55,16 +73,17 @@ int main(int ac, char **av) {
 		exit(1);
 	}
 
-	fd = open(av[2], O_WRONLY|O_CREAT|O_EXCL, 0640);
+	fd = open(av[1], O_WRONLY|O_CREAT|O_EXCL, 0640);
 	if (fd < 0) {
-		fprintf(stderr, "open(%s) failed: %s\n", av[2], strerror(errno));
+		fprintf(stderr, "open(%s) failed: %s\n", av[1], strerror(errno));
 		exit(1);
 	}
 
 	out = nmsg_output_open_file(fd, NMSG_WBUFSZ_MAX);
 	assert(out != NULL);
+	nmsg_output_set_zlibout(out, zlibout);
 
-	r = mtbl_reader_init(av[1], NULL);
+	r = mtbl_reader_init(av[0], NULL);
 	assert(r != NULL);
 	it = mtbl_source_get_prefix(mtbl_reader_source(r), (const uint8_t *)"\x00", 1);
 	assert(it != NULL);
