@@ -377,12 +377,24 @@ do_read(void)
 		res = nmsg_input_read(input, &msg);
 		if (res == nmsg_res_eof)
 			break;
-		assert(res == nmsg_res_success);
+		if (res != nmsg_res_success) {
+			fprintf(stderr, "Error reading nmsg input: %s", nmsg_res_lookup(res));
+			exit(EXIT_FAILURE);
+		}
 
 		int32_t vid = nmsg_message_get_vid(msg);
 		int32_t msgtype = nmsg_message_get_msgtype(msg);
-		assert(vid == NMSG_VENDOR_SIE_ID);
-		assert(msgtype == NMSG_VENDOR_SIE_DNSDEDUPE_ID);
+		if ((vid != NMSG_VENDOR_SIE_ID) || (msgtype != NMSG_VENDOR_SIE_DNSDEDUPE_ID)) {
+			if ((nmsg_msgmod_vid_to_vname(vid) != NULL) &&
+			    (nmsg_msgmod_msgtype_to_mname(vid, msgtype) != NULL))
+				fprintf(stderr, "Invalid msgtype %s:%s != sie:dnsdedupe, exiting.\n",
+						nmsg_msgmod_vid_to_vname(vid),
+						nmsg_msgmod_msgtype_to_mname(vid, msgtype));
+			else
+				fprintf(stderr, "Invalid msgtype %d:%d != sie:dnsdedupe, exiting.\n", vid, msgtype);
+
+			exit(EXIT_FAILURE);
+		}
 
 		dns = (Nmsg__Sie__DnsDedupe *) nmsg_message_get_payload(msg);
 		assert(dns != NULL);

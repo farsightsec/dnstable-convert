@@ -9,7 +9,7 @@ AC_SYS_LARGEFILE
 AC_CONFIG_MACRO_DIR([m4])
 AM_SILENT_RULES([yes])
 
-my_CFLAGS="-Wall \
+my_CFLAGS="-Wall -Wformat \
 -Wmissing-declarations -Wmissing-prototypes \
 -Wnested-externs -Wpointer-arith \
 -Wpointer-arith -Wsign-compare -Wchar-subscripts \
