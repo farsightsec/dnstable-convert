@@ -84,7 +84,11 @@ int main(int ac, char **av) {
 	nmsg_output_set_zlibout(out, zlibout);
 
 	r = mtbl_reader_init(av[0], NULL);
-	assert(r != NULL);
+	if (r == NULL) {
+		fprintf(stderr, "Failed to open %s as mtbl file\n", av[0]);
+		exit(1);
+	}
+
 	it = mtbl_source_get_prefix(mtbl_reader_source(r), (const uint8_t *)"\x00", 1);
 	assert(it != NULL);
 
