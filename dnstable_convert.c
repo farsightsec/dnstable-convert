@@ -576,6 +576,11 @@ main(int argc, char **argv)
 	do_write();
 	do_stats();
 
+	if (count_entries == 0) {
+		fprintf(stderr, "no DNS entries generated, unlinking %s\n", db_fname);
+		unlink(db_fname);
+	}
+
 	if (count_entries_dnssec == 0) {
 		fprintf(stderr, "no DNSSEC entries generated, unlinking %s\n", db_dnssec_fname);
 		unlink(db_dnssec_fname);
