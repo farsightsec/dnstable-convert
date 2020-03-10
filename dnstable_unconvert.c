@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -28,12 +29,29 @@
 #include <nmsg/sie/dnsdedupe.pb-c.h>
 #include <wdns.h>
 
+#define STATS_INTERVAL	1000000
+
 static nmsg_message_t entry_to_nmsg(struct dnstable_entry *, const uint8_t *, size_t);
-static nmsg_msgmod_t sie_dnsdedupe;
+
+static nmsg_msgmod_t	sie_dnsdedupe;
+static uint64_t		count_rrsets;
+static struct timespec	start_time;
 
 static void usage(const char *progname) {
 	fprintf(stderr, "Usage: %s [-z] <input.mtbl> <output.nmsg>\n", progname);
 	exit(1);
+}
+
+static void do_stats(void) {
+	struct timespec dur;
+	double t_dur;
+
+	nmsg_timespec_get(&dur);
+	nmsg_timespec_sub(&start_time, &dur);
+	t_dur = nmsg_timespec_to_double(&dur);
+
+	fprintf(stderr, "processed %'" PRIu64 " RRSets in %'.2f sec, %'d rrsets/sec\n",
+			count_rrsets, t_dur, (int)(count_rrsets / t_dur));
 }
 
 int main(int ac, char **av) {
@@ -92,6 +110,9 @@ int main(int ac, char **av) {
 	it = mtbl_source_get_prefix(mtbl_reader_source(r), (const uint8_t *)"\x00", 1);
 	assert(it != NULL);
 
+	fprintf(stderr, "Reading RRSets from %s into nmsg file %s\n", av[0], av[1]);
+	nmsg_timespec_get(&start_time);
+
 	while (mtbl_iter_next(it, &key, &len_key, &val, &len_val) == mtbl_res_success) {
 		struct dnstable_entry *e;
 		nmsg_message_t m;
@@ -106,7 +127,13 @@ int main(int ac, char **av) {
 
 		nmsg_message_destroy(&m);
 		dnstable_entry_destroy(&e);
+
+		count_rrsets ++;
+		if (count_rrsets % STATS_INTERVAL == 0)
+			do_stats();
 	}
+	do_stats();
+	fprintf(stderr, "Finished.\n");
 
 	nmsg_output_close(&out);
 	mtbl_iter_destroy(&it);
