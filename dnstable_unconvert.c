@@ -38,7 +38,7 @@ static uint64_t		count_rrsets;
 static struct timespec	start_time;
 
 static void usage(const char *progname) {
-	fprintf(stderr, "Usage: %s [-z] <input.mtbl> <output.nmsg>\n", progname);
+	fprintf(stderr, "Usage: %s [-z] <DB FILE> <NMSG FILE>\n", progname);
 	exit(1);
 }
 
