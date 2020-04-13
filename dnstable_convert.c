@@ -378,7 +378,7 @@ do_read(void)
 		if (res == nmsg_res_eof)
 			break;
 		if (res != nmsg_res_success) {
-			fprintf(stderr, "Error reading nmsg input: %s", nmsg_res_lookup(res));
+			fprintf(stderr, "Error reading nmsg input: %s\n", nmsg_res_lookup(res));
 			exit(EXIT_FAILURE);
 		}
 
