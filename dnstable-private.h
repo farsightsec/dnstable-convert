@@ -48,9 +48,11 @@
 /* This is a subset of the dnstable repo's dnstable-private.h with
  * just the content needed for dnstable_convert */
 
-#define ENTRY_TYPE_RRSET			'\x00'
-#define ENTRY_TYPE_RRSET_NAME_FWD		'\x01'
-#define ENTRY_TYPE_RDATA			'\x02'
-#define ENTRY_TYPE_RDATA_NAME_REV		'\x03'
+#define ENTRY_TYPE_RRSET			((uint8_t)0)
+#define ENTRY_TYPE_RRSET_NAME_FWD		((uint8_t)1)
+#define ENTRY_TYPE_RDATA			((uint8_t)2)
+#define ENTRY_TYPE_RDATA_NAME_REV		((uint8_t)3)
+#define ENTRY_TYPE_TIME_RANGE			((uint8_t)254)
+#define ENTRY_TYPE_VERSION			((uint8_t)255)
 
 #endif /* DNSTABLE_PRIVATE_H */

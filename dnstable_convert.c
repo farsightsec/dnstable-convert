@@ -38,6 +38,21 @@
 #include "libmy/ubuf.h"
 #include "libmy/my_byteorder.h"
 
+#define VERSION_RRSET				((uint8_t)0)
+#define VERSION_RRSET_NAME_FWD			((uint8_t)0)
+#define VERSION_RDATA				((uint8_t)1)
+#define VERSION_RDATA_NAME_REV			((uint8_t)1)
+
+static const struct {
+	uint8_t entry_type;
+	uint8_t version;
+} versions[] = {
+	{ ENTRY_TYPE_RRSET, VERSION_RRSET },
+	{ ENTRY_TYPE_RRSET_NAME_FWD, VERSION_RRSET_NAME_FWD },
+	{ ENTRY_TYPE_RDATA, VERSION_RDATA },
+	{ ENTRY_TYPE_RDATA_NAME_REV, VERSION_RDATA_NAME_REV },
+};
+
 static const char		*nmsg_fname;
 static const char		*db_fname;
 static const char		*db_dnssec_fname;
@@ -47,6 +62,11 @@ static struct mtbl_sorter	*sorter;
 static struct mtbl_sorter	*sorter_dnssec;
 static struct mtbl_writer	*writer;
 static struct mtbl_writer	*writer_dnssec;
+
+static uint64_t			min_time_first = UINT64_MAX;
+static uint64_t			min_time_first_dnssec = UINT64_MAX;
+static uint64_t			max_time_last;
+static uint64_t			max_time_last_dnssec;
 
 static struct timespec		start_time;
 static uint64_t			count_messages;
@@ -58,6 +78,15 @@ static uint64_t			count_entries_merged;
 
 #define DNS_MTBL_BLOCK_SIZE			8192
 #define DNSSEC_MTBL_BLOCK_SIZE			65536
+
+#define CASE_DNSSEC                        \
+	case WDNS_TYPE_DS:                 \
+	case WDNS_TYPE_RRSIG:              \
+	case WDNS_TYPE_NSEC:               \
+	case WDNS_TYPE_DNSKEY:             \
+	case WDNS_TYPE_NSEC3:              \
+	case WDNS_TYPE_NSEC3PARAM:         \
+	case WDNS_TYPE_DLV:
 
 static void
 do_stats(void)
@@ -103,13 +132,7 @@ static void
 add_entry(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val) {
 	mtbl_res res;
 	switch (dns->rrtype) {
-	case WDNS_TYPE_DS:
-	case WDNS_TYPE_RRSIG:
-	case WDNS_TYPE_NSEC:
-	case WDNS_TYPE_DNSKEY:
-	case WDNS_TYPE_NSEC3:
-	case WDNS_TYPE_NSEC3PARAM:
-	case WDNS_TYPE_DLV:
+	CASE_DNSSEC
 		res = mtbl_sorter_add(sorter_dnssec,
 				      ubuf_data(key), ubuf_size(key),
 				      ubuf_data(val), ubuf_size(val));
@@ -139,6 +162,17 @@ static void
 put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 {
 	uint64_t time_first, time_last, count;
+	uint64_t *pmin_time_first, *pmax_time_last;
+
+	switch(dns->rrtype) {
+	CASE_DNSSEC
+		pmin_time_first = &min_time_first_dnssec;
+		pmax_time_last = &max_time_last_dnssec;
+		break;
+	default:
+		pmin_time_first = &min_time_first;
+		pmax_time_last = &max_time_last;
+	}
 
 	if (dns->type == NMSG__SIE__DNS_DEDUPE_TYPE__AUTHORITATIVE ||
 	    dns->type == NMSG__SIE__DNS_DEDUPE_TYPE__MERGED_AUTHORITATIVE)
@@ -149,6 +183,12 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 		time_first = dns->time_first;
 		time_last = dns->time_last;
 	}
+
+	if (time_first < *pmin_time_first)
+		*pmin_time_first = time_first;
+
+	if (time_last > *pmax_time_last)
+		*pmax_time_last = time_last;
 
 	if (dns->type == NMSG__SIE__DNS_DEDUPE_TYPE__INSERTION)
 		count = 0;
@@ -361,6 +401,58 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 }
 
 static void
+process_time_range(ubuf *key, ubuf *val)
+{
+	mtbl_res res;
+
+	ubuf_clip(key, 0);
+	ubuf_add(key, ENTRY_TYPE_TIME_RANGE);
+
+	ubuf_clip(val, 0);
+	ubuf_reserve(val, ubuf_size(val) + mtbl_varint_length(min_time_first));
+	ubuf_advance(val, mtbl_varint_encode64(ubuf_ptr(val), min_time_first));
+	ubuf_reserve(val, ubuf_size(val) + mtbl_varint_length(max_time_last));
+	ubuf_advance(val, mtbl_varint_encode64(ubuf_ptr(val), max_time_last));
+
+	res = mtbl_sorter_add(sorter, ubuf_data(key), ubuf_size(key),
+				    ubuf_data(val), ubuf_size(val));
+	assert(res == mtbl_res_success);
+
+	ubuf_clip(val, 0);
+	ubuf_reserve(val, ubuf_size(val) + mtbl_varint_length(min_time_first_dnssec));
+	ubuf_advance(val, mtbl_varint_encode64(ubuf_ptr(val), min_time_first_dnssec));
+	ubuf_reserve(val, ubuf_size(val) + mtbl_varint_length(max_time_last_dnssec));
+	ubuf_advance(val, mtbl_varint_encode64(ubuf_ptr(val), max_time_last_dnssec));
+
+	res = mtbl_sorter_add(sorter_dnssec, ubuf_data(key), ubuf_size(key),
+				    ubuf_data(val), ubuf_size(val));
+	assert(res == mtbl_res_success);
+}
+
+static void
+process_version(ubuf *key, ubuf *val)
+{
+	mtbl_res res;
+	size_t i;
+
+	ubuf_clip(val, 0);
+
+	for (i = 0; i < sizeof(versions) / sizeof(versions[0]); i++) {
+		ubuf_clip(key, 0);
+		ubuf_add(key, ENTRY_TYPE_VERSION);
+
+		ubuf_add(key, versions[i].entry_type);
+		ubuf_add(key, versions[i].version);
+		res = mtbl_sorter_add(sorter, ubuf_data(key), ubuf_size(key),
+				ubuf_data(val), ubuf_size(val));
+		assert(res == mtbl_res_success);
+		res = mtbl_sorter_add(sorter_dnssec, ubuf_data(key), ubuf_size(key),
+				ubuf_data(val), ubuf_size(val));
+		assert(res == mtbl_res_success);
+	}
+}
+
+static void
 do_read(void)
 {
 	Nmsg__Sie__DnsDedupe *dns;
@@ -419,6 +511,9 @@ do_read(void)
 		if ((count_messages % STATS_INTERVAL) == 0)
 			do_stats();
 	}
+
+	process_time_range(key, val);
+	process_version(key, val);
 
 	ubuf_destroy(&key);
 	ubuf_destroy(&val);
