@@ -1,0 +1,3 @@
+;;; Dumped 2 entries.
+_rsync._tcp.example.net. IN SRV 20 100 49222 x.example.net.
+_rsync._tcp.example.net. IN SRV 10 100 49222 a4.example.net.

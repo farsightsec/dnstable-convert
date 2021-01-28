@@ -1,0 +1,104 @@
+#!/bin/sh
+
+# The original files for comparisons already exist in the source repo.
+# For regression, run the tools again and compare.
+
+# This requires two tools from dnstable.
+DNSTABLE_LOOKUP=${DNSTABLE_LOOKUP:-dnstable_lookup}
+DNSTABLE_DUMP=${DNSTABLE_DUMP:-dnstable_dump}
+
+DNSTABLE_CONVERT=@abs_top_builddir@/dnstable_convert
+
+exitcode=0
+
+echo Create a dnstable mtbl file with SRV records and make sure it works
+echo for forward rrset and reverse rdata dumps and a rdata name lookup.
+
+rm -f @abs_builddir@/srv.dns.mtbl
+
+echo -n "dnstable_convert of a SRV record set to mtbl: "
+# NOTE: no DNSSEC records so the dnssec file will be created and removed
+# strip off the timing for comparison
+$DNSTABLE_CONVERT @abs_srcdir@/srv.dnsdedupe.nmsg @abs_builddir@/srv.dns.mtbl foo.dnssec.mtbl 2>&1 | sed -e "s/ in [0-9].*sec.*$//" > @abs_builddir@/dnstable_convert.output1.tmp
+cmp -s @abs_srcdir@/dnstable_convert.output1 @abs_builddir@/dnstable_convert.output1.tmp
+if [ "$?" -eq 0 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+echo -n "verify SRV record set worked for rrset dump: "
+$DNSTABLE_DUMP -r @abs_builddir@/srv.dns.mtbl > @abs_builddir@/dnstable_dump.rrset.output1.tmp
+cmp -s @abs_srcdir@/dnstable_dump.rrset.output1 @abs_builddir@/dnstable_dump.rrset.output1.tmp
+if [ "$?" -eq 0 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+echo -n "verify SRV record set worked for rdata dump: "
+$DNSTABLE_DUMP -d @abs_builddir@/srv.dns.mtbl > @abs_builddir@/dnstable_dump.rdata.output1.tmp
+cmp -s @abs_srcdir@/dnstable_dump.rdata.output1 @abs_builddir@/dnstable_dump.rdata.output1.tmp
+if [ "$?" -eq 0 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+echo -n "verify SRV record set works for rdata lookup: "
+DNSTABLE_FNAME=@abs_builddir@/srv.dns.mtbl $DNSTABLE_LOOKUP rdata name "*.example.net." SRV > @abs_builddir@/dnstable_lookup.rdata.name.output1.tmp 2>&1
+cmp -s @abs_srcdir@/dnstable_lookup.rdata.name.output1 @abs_builddir@/dnstable_lookup.rdata.name.output1.tmp
+if [ "$?" -eq 0 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+# https://github.com/farsightsec/dnstable-convert/pull/1
+echo
+echo Testing with a broken dnstable MTBL file previously generated
+echo with dnstable_convert 0.9.1 without the SRV fix.
+echo The broken MTBL data should work for dumps but not a rdata name lookup.
+
+echo -n "verify broken SRV record set worked for rrset dump: "
+$DNSTABLE_DUMP -r @abs_srcdir@/broken-srv.dns.mtbl > @abs_builddir@/dnstable_dump.rrset.output2.tmp
+# compare with original file
+cmp -s @abs_srcdir@/dnstable_dump.rrset.output1 @abs_builddir@/dnstable_dump.rrset.output2.tmp
+if [ "$?" -eq 0 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+echo -n "verify broken SRV record set worked for rdata dump: "
+$DNSTABLE_DUMP -d @abs_srcdir@/broken-srv.dns.mtbl > @abs_builddir@/dnstable_dump.rdata.output2.tmp
+result=0
+# compare with original file
+cmp -s @abs_srcdir@/dnstable_dump.rdata.output1 @abs_builddir@/dnstable_dump.rdata.output2.tmp
+if [ "$?" -eq 0 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+echo -n "verify broken SRV record set does NOT work for rdata lookup: "
+DNSTABLE_FNAME=@abs_srcdir@/broken-srv.dns.mtbl $DNSTABLE_LOOKUP rdata name "*.example.net." SRV > @abs_builddir@/dnstable_lookup.rdata.name.output2.tmp 2>&1
+result=0
+# it should not match
+cmp -s @abs_srcdir@/dnstable_lookup.rdata.name.output1 @abs_builddir@/dnstable_lookup.rdata.name.output2.tmp && result=1
+grep "Dumped 0 entries" @abs_builddir@/dnstable_lookup.rdata.name.output2.tmp >/dev/null || result=1
+if [ "$result" -eq 0 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+exit $exitcode
+

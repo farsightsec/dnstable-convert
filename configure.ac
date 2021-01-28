@@ -9,7 +9,7 @@ AC_SYS_LARGEFILE
 AC_CONFIG_MACRO_DIR([m4])
 AM_SILENT_RULES([yes])
 
-my_CFLAGS="-Wall \
+my_CFLAGS="-Wall -Wformat \
 -Wmissing-declarations -Wmissing-prototypes \
 -Wnested-externs -Wpointer-arith \
 -Wpointer-arith -Wsign-compare -Wchar-subscripts \
@@ -19,6 +19,9 @@ AC_SUBST([my_CFLAGS])
 
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([tests/tests.sh], [chmod +x tests/tests.sh])
+
+AC_CHECK_HEADERS([sys/endian.h endian.h])
 
 PKG_CHECK_MODULES([libdnstable], [libdnstable])
 PKG_CHECK_MODULES([libnmsg], [libnmsg])
