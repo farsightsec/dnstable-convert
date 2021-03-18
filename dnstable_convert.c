@@ -435,14 +435,13 @@ process_version(ubuf *key, ubuf *val)
 	mtbl_res res;
 	size_t i;
 
-	ubuf_clip(val, 0);
-
 	for (i = 0; i < sizeof(versions) / sizeof(versions[0]); i++) {
 		ubuf_clip(key, 0);
 		ubuf_add(key, ENTRY_TYPE_VERSION);
-
 		ubuf_add(key, versions[i].entry_type);
-		ubuf_add(key, versions[i].version);
+
+		ubuf_clip(val, 0);
+		ubuf_add(val, versions[i].version);
 		res = mtbl_sorter_add(sorter, ubuf_data(key), ubuf_size(key),
 				ubuf_data(val), ubuf_size(val));
 		assert(res == mtbl_res_success);
