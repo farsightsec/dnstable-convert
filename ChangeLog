@@ -1,3 +1,10 @@
+dnstable-convert (0.9.2)
+
+  * Temporary compatibility release that does not include the
+    fixes for SRV encoding and SOA MNAME indexing.
+
+ -- Farsight Security, Inc. <software@farsightsecurity.com>  Tue, 30 Mar 2021 15:14:02 -0400
+
 dnstable-convert (0.10.0)
 
   * Separate dnstable_convert from dnstable repository version 0.9.1-3
