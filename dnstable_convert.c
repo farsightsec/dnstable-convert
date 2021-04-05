@@ -40,7 +40,7 @@
 
 static const struct {
 	uint8_t entry_type;
-	uint8_t version;
+	uint32_t version;
 } versions[] = {
 	{ ENTRY_TYPE_RRSET, 0 },
 	{ ENTRY_TYPE_RRSET_NAME_FWD, 0 },
@@ -436,7 +436,8 @@ process_version(ubuf *key, ubuf *val)
 		ubuf_add(key, versions[i].entry_type);
 
 		ubuf_clip(val, 0);
-		ubuf_add(val, versions[i].version);
+		ubuf_reserve(val, ubuf_size(val) + mtbl_varint_length(versions[i].version));
+		ubuf_advance(val, mtbl_varint_encode32(ubuf_ptr(val), versions[i].version));
 		res = mtbl_sorter_add(sorter, ubuf_data(key), ubuf_size(key),
 				ubuf_data(val), ubuf_size(val));
 		assert(res == mtbl_res_success);
