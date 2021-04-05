@@ -38,19 +38,14 @@
 #include "libmy/ubuf.h"
 #include "libmy/my_byteorder.h"
 
-#define VERSION_RRSET				((uint8_t)0)
-#define VERSION_RRSET_NAME_FWD			((uint8_t)0)
-#define VERSION_RDATA				((uint8_t)1)
-#define VERSION_RDATA_NAME_REV			((uint8_t)1)
-
 static const struct {
 	uint8_t entry_type;
 	uint8_t version;
 } versions[] = {
-	{ ENTRY_TYPE_RRSET, VERSION_RRSET },
-	{ ENTRY_TYPE_RRSET_NAME_FWD, VERSION_RRSET_NAME_FWD },
-	{ ENTRY_TYPE_RDATA, VERSION_RDATA },
-	{ ENTRY_TYPE_RDATA_NAME_REV, VERSION_RDATA_NAME_REV },
+	{ ENTRY_TYPE_RRSET, 0 },
+	{ ENTRY_TYPE_RRSET_NAME_FWD, 0 },
+	{ ENTRY_TYPE_RDATA, 1 },
+	{ ENTRY_TYPE_RDATA_NAME_REV, 1 },
 };
 
 static const char		*nmsg_fname;
