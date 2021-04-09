@@ -38,6 +38,8 @@
 #include "libmy/ubuf.h"
 #include "libmy/my_byteorder.h"
 
+#define DEFAULT_COMPRESSION_LEVEL (-1000)
+
 static const struct {
 	uint8_t entry_type;
 	uint32_t version;
@@ -621,7 +623,7 @@ init_nmsg(void)
 }
 
 static void
-init_mtbl(void)
+init_mtbl(mtbl_compression_type compression, int level)
 {
 	struct mtbl_sorter_options *sopt;
 	struct mtbl_writer_options *wopt;
@@ -633,7 +635,9 @@ init_mtbl(void)
 		mtbl_sorter_options_set_temp_dir(sopt, getenv("VARTMPDIR"));
 
 	wopt = mtbl_writer_options_init();
-	mtbl_writer_options_set_compression(wopt, MTBL_COMPRESSION_ZLIB);
+	mtbl_writer_options_set_compression(wopt, compression);
+	if (level != DEFAULT_COMPRESSION_LEVEL)
+		mtbl_writer_options_set_compression_level(wopt, level);
 
 	mtbl_writer_options_set_block_size(wopt, DNS_MTBL_BLOCK_SIZE);
 	writer = mtbl_writer_init(db_fname, wopt);
@@ -656,14 +660,60 @@ init_mtbl(void)
 	mtbl_writer_options_destroy(&wopt);
 }
 
+static void
+usage(const char *name)
+{
+	fprintf(stderr, "Usage: %s [ -c compression ] [ -l level ] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, " -c TYPE: Use TYPE compression (Default: zlib)\n");
+	fprintf(stderr, " -l LEVEL: Use numeric LEVEL of compression.\n"
+			"             Default varies based on TYPE.\n");
+}
+
 int
 main(int argc, char **argv)
 {
+	mtbl_compression_type compression = MTBL_COMPRESSION_ZLIB;
+	int compression_level = DEFAULT_COMPRESSION_LEVEL;
+	const char *name = argv[0];
+	int c;
+
 	setlocale(LC_ALL, "");
 
-	if (argc != 4) {
-		fprintf(stderr, "Usage: %s <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n",
-			argv[0]);
+	while ((c = getopt(argc, argv, "c:l:")) != -1) {
+		mtbl_res res;
+		char *end;
+
+		switch(c) {
+		case 'c':
+			res = mtbl_compression_type_from_str(optarg, &compression);
+			if (res != mtbl_res_success) {
+				fprintf(stderr, "Invalid compression type '%s'\n", optarg);
+				usage(name);
+				return (EXIT_FAILURE);
+			}
+			break;
+		case 'l':
+			compression_level = strtol(optarg, &end, 10);
+			if (*end != '\0') {
+				fprintf(stderr, "Invalid compression level '%s'\n", optarg);
+				usage(name);
+				return (EXIT_FAILURE);
+			}
+			break;
+		case 'h':
+		case '?':
+		default:
+			usage(name);
+			return (c == 'h')?(EXIT_SUCCESS):(EXIT_FAILURE);
+		}
+	}
+
+	argv += optind;
+	argc -= optind;
+
+	if (argc != 3) {
+		usage(name);
 		return (EXIT_FAILURE);
 	}
 	nmsg_fname = argv[1];
@@ -671,7 +721,7 @@ main(int argc, char **argv)
 	db_dnssec_fname = argv[3];
 
 	init_nmsg();
-	init_mtbl();
+	init_mtbl(compression, compression_level);
 	nmsg_timespec_get(&start_time);
 	do_read();
 	nmsg_input_close(&input);
