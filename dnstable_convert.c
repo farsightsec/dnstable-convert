@@ -85,11 +85,14 @@ static uint64_t			count_entries_merged;
 
 #define CASE_DNSSEC                        \
 	case WDNS_TYPE_DS:                 \
+	case WDNS_TYPE_CDS:                \
 	case WDNS_TYPE_RRSIG:              \
 	case WDNS_TYPE_NSEC:               \
 	case WDNS_TYPE_DNSKEY:             \
+	case WDNS_TYPE_CDNSKEY:            \
 	case WDNS_TYPE_NSEC3:              \
 	case WDNS_TYPE_NSEC3PARAM:         \
+	case WDNS_TYPE_TA:                 \
 	case WDNS_TYPE_DLV:
 
 static void
