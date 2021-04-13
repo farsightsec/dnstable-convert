@@ -50,6 +50,13 @@ static const struct {
 	{ ENTRY_TYPE_RDATA_NAME_REV, 1 },
 };
 
+#ifndef WDNS_TYPE_SVCB
+#define WDNS_TYPE_SVCB		64
+#endif
+#ifndef WDNS_TYPE_HTTPS
+#define WDNS_TYPE_HTTPS		65
+#endif
+
 static const char		*nmsg_fname;
 static const char		*db_fname;
 static const char		*db_dnssec_fname;
@@ -294,12 +301,15 @@ static void
 process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 {
 	uint8_t name[WDNS_MAXLEN_NAME];
-	size_t offset;
+	wdns_name_t downcase;
+	size_t offset, len;
 	wdns_res res;
 
 	switch (dns->rrtype) {
 	case WDNS_TYPE_MX:
-		offset = 2;	/* skip MX preference */
+	case WDNS_TYPE_SVCB:
+	case WDNS_TYPE_HTTPS:
+		offset = 2;	/* skip MX, SVCB, or HTTPS preference */
 		break;
 	case WDNS_TYPE_SRV:
 		offset = 6;	/* skip SRV priority, weight, port */
@@ -318,8 +328,33 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 	/* key: type byte */
 	ubuf_add(key, ENTRY_TYPE_RDATA);
 
-	/* key: data */
-	ubuf_append(key, dns->rdata[i].data + offset, dns->rdata[i].len - offset);
+	switch(dns->rrtype) {
+	case WDNS_TYPE_MX:
+	case WDNS_TYPE_SRV:
+		/* key: data */
+		ubuf_append(key, dns->rdata[i].data + offset, dns->rdata[i].len - offset);
+		break;
+	case WDNS_TYPE_SVCB:
+	case WDNS_TYPE_HTTPS:
+		res = wdns_len_uname(dns->rdata[i].data + offset,
+				     dns->rdata[i].data + dns->rdata[i].len,
+				     &len);
+		if (res != wdns_res_success)
+			return;
+
+		/* key: downcased target name */
+		ubuf_reserve(key, len);
+		downcase.data = ubuf_ptr(key);
+		downcase.len = len;
+		memcpy(ubuf_ptr(key), dns->rdata[i].data + offset, len);
+		wdns_downcase_name(&downcase);
+		ubuf_advance(key, len);
+
+		/* key: rest of rdata */
+		ubuf_append(key, dns->rdata[i].data + offset + len,
+				 dns->rdata[i].len - (offset + len));
+		break;
+	}
 
 	/* key: rrtype (varint encoded) */
 	ubuf_reserve(key, ubuf_size(key) + mtbl_varint_length(dns->rrtype));
@@ -349,6 +384,8 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 {
 	size_t offset, len = dns->rdata[i].len;
 	uint8_t name[WDNS_MAXLEN_NAME];
+	wdns_name_t downcase;
+	bool do_downcase = false;
 	wdns_res res;
 
 	switch (dns->rrtype) {
@@ -366,6 +403,16 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 	case WDNS_TYPE_DNAME:
 	case WDNS_TYPE_PTR:
 		offset = 0;
+		break;
+	case WDNS_TYPE_SVCB:
+	case WDNS_TYPE_HTTPS:
+		offset = 2;
+		do_downcase = true;
+		res = wdns_len_uname(dns->rdata[i].data + offset,
+				     dns->rdata[i].data + len,
+				     &len);
+		if (res != wdns_res_success)
+			return;
 		break;
 	case WDNS_TYPE_MX:
 		offset = 2;	/* skip MX preference */
@@ -392,6 +439,11 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 	/* key: rdata name (label-reversed) */
 	res = wdns_reverse_name(dns->rdata[i].data + offset, len, name);
 	assert(res == wdns_res_success);
+	if (do_downcase) {
+		downcase.data = name;
+		downcase.len = len;
+		wdns_downcase_name(&downcase);
+	}
 	ubuf_append(key, name, len);
 
 	add_entry(dns, key, val);
