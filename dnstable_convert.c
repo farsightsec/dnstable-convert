@@ -60,6 +60,7 @@ static const struct {
 static const char		*nmsg_fname;
 static const char		*db_fname;
 static const char		*db_dnssec_fname;
+static bool			dnssec_dup;
 
 static nmsg_input_t		input;
 static struct mtbl_sorter	*sorter;
@@ -145,7 +146,12 @@ add_entry(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val) {
 				      ubuf_data(val), ubuf_size(val));
 		assert(res == mtbl_res_success);
 		count_entries_dnssec += 1;
-		break;
+		if (!dnssec_dup)
+			break;
+		if ((dns->rrtype != WDNS_TYPE_CDS) &&
+		    (dns->rrtype != WDNS_TYPE_CDNSKEY) &&
+		    (dns->rrtype != WDNS_TYPE_TA))
+			break;
 	default:
 		res = mtbl_sorter_add(sorter,
 				      ubuf_data(key), ubuf_size(key),
@@ -175,7 +181,12 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 	CASE_DNSSEC
 		pmin_time_first = &min_time_first_dnssec;
 		pmax_time_last = &max_time_last_dnssec;
-		break;
+		if (!dnssec_dup)
+			break;
+		if ((dns->rrtype != WDNS_TYPE_CDS) &&
+		    (dns->rrtype != WDNS_TYPE_CDNSKEY) &&
+		    (dns->rrtype != WDNS_TYPE_TA))
+			break;
 	default:
 		pmin_time_first = &min_time_first;
 		pmax_time_last = &max_time_last;
@@ -718,9 +729,10 @@ init_mtbl(mtbl_compression_type compression, int level)
 static void
 usage(const char *name)
 {
-	fprintf(stderr, "Usage: %s [ -c compression ] [ -l level ] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
+	fprintf(stderr, "Usage: %s [-D] [ -c compression ] [ -l level ] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
 	fprintf(stderr, "Options:\n");
-	fprintf(stderr, " -c TYPE: Use TYPE compression (Default: zlib)\n");
+	fprintf(stderr, " -D:       Put CDS, CDNSKEY, and TA RRSets in both outputs\n");
+	fprintf(stderr, " -c TYPE:  Use TYPE compression (Default: zlib)\n");
 	fprintf(stderr, " -l LEVEL: Use numeric LEVEL of compression.\n"
 			"             Default varies based on TYPE.\n");
 }
@@ -735,11 +747,14 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "c:l:")) != -1) {
+	while ((c = getopt(argc, argv, "D:c:l:")) != -1) {
 		mtbl_res res;
 		char *end;
 
 		switch(c) {
+		case 'D':
+			dnssec_dup = true;
+			break;
 		case 'c':
 			res = mtbl_compression_type_from_str(optarg, &compression);
 			if (res != mtbl_res_success) {
