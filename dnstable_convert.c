@@ -175,12 +175,11 @@ static void
 put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 {
 	uint64_t time_first, time_last, count;
-	uint64_t *pmin_time_first, *pmax_time_last;
+	bool is_dns = false, is_dnssec = false;
 
 	switch(dns->rrtype) {
 	CASE_DNSSEC
-		pmin_time_first = &min_time_first_dnssec;
-		pmax_time_last = &max_time_last_dnssec;
+		is_dnssec = true;
 		if (!dnssec_dup)
 			break;
 		if ((dns->rrtype != WDNS_TYPE_CDS) &&
@@ -188,8 +187,7 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 		    (dns->rrtype != WDNS_TYPE_TA))
 			break;
 	default:
-		pmin_time_first = &min_time_first;
-		pmax_time_last = &max_time_last;
+		is_dns = true;
 	}
 
 	if (dns->type == NMSG__SIE__DNS_DEDUPE_TYPE__AUTHORITATIVE ||
@@ -202,11 +200,19 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 		time_last = dns->time_last;
 	}
 
-	if (time_first < *pmin_time_first)
-		*pmin_time_first = time_first;
+	if (is_dns) {
+		if (time_first < min_time_first)
+			min_time_first = time_first;
+		if (time_last > max_time_last)
+			max_time_last = time_last;
+	}
 
-	if (time_last > *pmax_time_last)
-		*pmax_time_last = time_last;
+	if (is_dnssec) {
+		if (time_first < min_time_first_dnssec)
+			min_time_first_dnssec = time_first;
+		if (time_last > max_time_last_dnssec)
+			max_time_last_dnssec = time_last;
+	}
 
 	if (dns->type == NMSG__SIE__DNS_DEDUPE_TYPE__INSERTION)
 		count = 0;
