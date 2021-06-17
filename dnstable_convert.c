@@ -66,7 +66,7 @@ static const struct {
 static const char		*nmsg_fname;
 static const char		*db_dns_fname;
 static const char		*db_dnssec_fname;
-static bool			dnssec_dup;
+static bool			migrate_dnssec;
 
 static nmsg_input_t		input;
 static struct mtbl_sorter	*sorter_dns;
@@ -152,7 +152,7 @@ add_entry(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val) {
 				      ubuf_data(val), ubuf_size(val));
 		assert(res == mtbl_res_success);
 		count_entries_dnssec += 1;
-		if (!dnssec_dup)
+		if (!migrate_dnssec)
 			break;
 		if ((dns->rrtype != WDNS_TYPE_CDS) &&
 		    (dns->rrtype != WDNS_TYPE_CDNSKEY) &&
@@ -186,7 +186,7 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 	switch(dns->rrtype) {
 	CASE_DNSSEC
 		is_dnssec = true;
-		if (!dnssec_dup)
+		if (!migrate_dnssec)
 			break;
 		if ((dns->rrtype != WDNS_TYPE_CDS) &&
 		    (dns->rrtype != WDNS_TYPE_CDNSKEY) &&
@@ -773,7 +773,7 @@ main(int argc, char **argv)
 
 		switch(c) {
 		case 'D':
-			dnssec_dup = true;
+			migrate_dnssec = true;
 			break;
 		case 'c':
 			res = mtbl_compression_type_from_str(optarg, &compression);

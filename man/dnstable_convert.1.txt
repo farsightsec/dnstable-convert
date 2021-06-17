@@ -6,7 +6,7 @@ dnstable_convert - convert passive DNS NMSG data to dnstable MTBL format
 
 == SYNOPSIS ==
 
-^dnstable_convert^ 'NMSG-FILE' 'DB-FILE' 'DB-DNSSEC-FILE'
+^dnstable_convert^ [^-D^] 'NMSG-FILE' 'DB-FILE' 'DB-DNSSEC-FILE'
 
 == DESCRIPTION ==
 
@@ -32,3 +32,10 @@ mtbl files.  The optional 'VARTMPDIR' environment variable can
 be set to override the location.  Specifying a filesystem for RAM-based
 storage or specifying the same filesystem as the source data file might
 be useful.
+
+== OPTIONS ==
+
+^-D^::
+    This flag enables a transitional compatibility mode for migrating
+    selected DNSSEC types from being in just the ^dns.^ files to also
+    being in the ^dnssec.^ files.
