@@ -50,6 +50,12 @@ static const struct {
 	{ ENTRY_TYPE_RDATA_NAME_REV, 1 },
 };
 
+/*
+ * Define SVCB and HTTPS types if we are compiling against a version
+ * of wdns without them. The conversion logic specific to these types
+ * is provided by dnstable_convert, so additional wdns library support
+ * for these types is not required.
+ */
 #ifndef WDNS_TYPE_SVCB
 #define WDNS_TYPE_SVCB		64
 #endif
@@ -317,6 +323,14 @@ process_rdata(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 	add_entry(dns, key, val);
 }
 
+/*
+ * SVCB and HTTPS records contain a hostname offset by a preference,
+ * requiring slice encoding.  They also need reversed name
+ * indexing. In addition, these newer types do not have
+ * case-normalized hostnames, so the hostname portion needs to be
+ * downcased for search purposes in the sliced encoding and reversed
+ * name entry.
+ */
 static void
 process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 {
