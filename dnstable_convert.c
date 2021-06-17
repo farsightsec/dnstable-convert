@@ -158,6 +158,7 @@ add_entry(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val) {
 		    (dns->rrtype != WDNS_TYPE_CDNSKEY) &&
 		    (dns->rrtype != WDNS_TYPE_TA))
 			break;
+		/* fallthrough */
 	default:
 		res = mtbl_sorter_add(sorter_dns,
 				      ubuf_data(key), ubuf_size(key),
@@ -192,6 +193,7 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 		    (dns->rrtype != WDNS_TYPE_CDNSKEY) &&
 		    (dns->rrtype != WDNS_TYPE_TA))
 			break;
+		/* fallthrough */
 	default:
 		is_dns = true;
 	}
