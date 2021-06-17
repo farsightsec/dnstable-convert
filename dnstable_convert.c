@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 by Farsight Security, Inc.
+ * Copyright (c) 2012-2015, 2021 by Farsight Security, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,14 +58,14 @@ static const struct {
 #endif
 
 static const char		*nmsg_fname;
-static const char		*db_fname;
+static const char		*db_dns_fname;
 static const char		*db_dnssec_fname;
 static bool			dnssec_dup;
 
 static nmsg_input_t		input;
-static struct mtbl_sorter	*sorter;
+static struct mtbl_sorter	*sorter_dns;
 static struct mtbl_sorter	*sorter_dnssec;
-static struct mtbl_writer	*writer;
+static struct mtbl_writer	*writer_dns;
 static struct mtbl_writer	*writer_dnssec;
 
 static uint64_t			min_time_first = UINT64_MAX;
@@ -153,7 +153,7 @@ add_entry(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val) {
 		    (dns->rrtype != WDNS_TYPE_TA))
 			break;
 	default:
-		res = mtbl_sorter_add(sorter,
+		res = mtbl_sorter_add(sorter_dns,
 				      ubuf_data(key), ubuf_size(key),
 				      ubuf_data(val), ubuf_size(val));
 		assert(res == mtbl_res_success);
@@ -483,7 +483,7 @@ process_time_range(ubuf *key, ubuf *val)
 	ubuf_reserve(val, ubuf_size(val) + mtbl_varint_length(max_time_last));
 	ubuf_advance(val, mtbl_varint_encode64(ubuf_ptr(val), max_time_last));
 
-	res = mtbl_sorter_add(sorter, ubuf_data(key), ubuf_size(key),
+	res = mtbl_sorter_add(sorter_dns, ubuf_data(key), ubuf_size(key),
 				    ubuf_data(val), ubuf_size(val));
 	assert(res == mtbl_res_success);
 
@@ -512,7 +512,7 @@ process_version(ubuf *key, ubuf *val)
 		ubuf_clip(val, 0);
 		ubuf_reserve(val, ubuf_size(val) + mtbl_varint_length(versions[i].version));
 		ubuf_advance(val, mtbl_varint_encode32(ubuf_ptr(val), versions[i].version));
-		res = mtbl_sorter_add(sorter, ubuf_data(key), ubuf_size(key),
+		res = mtbl_sorter_add(sorter_dns, ubuf_data(key), ubuf_size(key),
 				ubuf_data(val), ubuf_size(val));
 		assert(res == mtbl_res_success);
 		res = mtbl_sorter_add(sorter_dnssec, ubuf_data(key), ubuf_size(key),
@@ -646,8 +646,8 @@ do_write(void)
 	int ret;
 
 	ctx_dns.n = "dns";
-	ctx_dns.s = sorter;
-	ctx_dns.w = writer;
+	ctx_dns.s = sorter_dns;
+	ctx_dns.w = writer_dns;
 
 	ctx_dnssec.n = "dnssec";
 	ctx_dnssec.s = sorter_dnssec;
@@ -712,9 +712,9 @@ init_mtbl(mtbl_compression_type compression, int level)
 		mtbl_writer_options_set_compression_level(wopt, level);
 
 	mtbl_writer_options_set_block_size(wopt, DNS_MTBL_BLOCK_SIZE);
-	writer = mtbl_writer_init(db_fname, wopt);
-	if (writer == NULL) {
-		perror(db_fname);
+	writer_dns = mtbl_writer_init(db_dns_fname, wopt);
+	if (writer_dns == NULL) {
+		perror(db_dns_fname);
 		exit(EXIT_FAILURE);
 	}
 
@@ -725,7 +725,7 @@ init_mtbl(mtbl_compression_type compression, int level)
 		exit(EXIT_FAILURE);
 	}
 
-	sorter = mtbl_sorter_init(sopt);
+	sorter_dns = mtbl_sorter_init(sopt);
 	sorter_dnssec = mtbl_sorter_init(sopt);
 
 	mtbl_sorter_options_destroy(&sopt);
@@ -793,7 +793,7 @@ main(int argc, char **argv)
 		return (EXIT_FAILURE);
 	}
 	nmsg_fname = argv[1];
-	db_fname = argv[2];
+	db_dns_fname = argv[2];
 	db_dnssec_fname = argv[3];
 
 	init_nmsg();
@@ -805,8 +805,8 @@ main(int argc, char **argv)
 	do_stats();
 
 	if (count_entries == 0) {
-		fprintf(stderr, "no DNS entries generated, unlinking %s\n", db_fname);
-		unlink(db_fname);
+		fprintf(stderr, "no DNS entries generated, unlinking %s\n", db_dns_fname);
+		unlink(db_dns_fname);
 	}
 
 	if (count_entries_dnssec == 0) {
