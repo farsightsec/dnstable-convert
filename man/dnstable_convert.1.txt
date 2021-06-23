@@ -17,7 +17,7 @@ MTBL files: the 'DB-DNS-FILE' containing "plain" DNS records, and the
 'DB-DNSSEC-FILE', containing DNSSEC-related records.
 
 Specifically, all resource records of type DS, RRSIG, NSEC, DNSKEY,
-NSEC3, NSEC3PARAM, DLV, CDS, CDNSKEY, and TLV are stored in the
+NSEC3, NSEC3PARAM, DLV, CDS, CDNSKEY, and TA are stored in the
 'DB-DNSSEC-FILE', and resource records of all other types are stored
 in the 'DB-DNS-FILE'.  If the ^-D^ flag is provided then CDS, CDNSKEY,
 and TLV will also be stored in the 'DB-DNS-FILE' file for transition
