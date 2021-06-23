@@ -769,7 +769,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "D:c:l:")) != -1) {
+	while ((c = getopt(argc, argv, "Dc:l:")) != -1) {
 		mtbl_res res;
 		char *end;
 
@@ -808,9 +808,9 @@ main(int argc, char **argv)
 		usage(name);
 		return (EXIT_FAILURE);
 	}
-	nmsg_fname = argv[1];
-	db_dns_fname = argv[2];
-	db_dnssec_fname = argv[3];
+	nmsg_fname = argv[0];
+	db_dns_fname = argv[1];
+	db_dnssec_fname = argv[2];
 
 	init_nmsg();
 	init_mtbl(compression, compression_level);
