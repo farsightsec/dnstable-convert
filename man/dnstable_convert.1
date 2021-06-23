@@ -38,7 +38,7 @@ Converts passive DNS data from NMSG format to MTBL format\&. The input NMSG data
 .sp
 Specifically, all resource records of type DS, RRSIG, NSEC, DNSKEY, NSEC3, NSEC3PARAM, DLV, CDS, CDNSKEY, and TA are stored in the \fIDB\-DNSSEC\-FILE\fR, and resource records of all other types are stored in the \fIDB\-DNS\-FILE\fR\&. If the \fB\-D\fR flag is provided then CDS, CDNSKEY, and TLV will also be stored in the \fIDB\-DNS\-FILE\fR file for transition compability\&.
 .sp
-\fBdnstable_convert\fR will create both the \fIDB\-DNS\-FILE\fR and \fIDB\-DNSSEC\-FILE\fR, and will abort if either exists\&. If the input file contains no DNSSEC\-related records, \fIDB\-DNSSEC\-FILE\fR will be removed\&.
+\fBdnstable_convert\fR will create both the \fIDB\-DNS\-FILE\fR and \fIDB\-DNSSEC\-FILE\fR, and will abort if either exists\&. If the input file contains no DNS\-related records, \fIDB\-DNS\-FILE\fR will be removed\&. Conversely, if the input file contains no DNSSEC\-related records, \fIDB\-DNSSEC\-FILE\fR will be removed\&.
 .sp
 The output files produced by \fBdnstable_convert\fR are suitable for use with other dnstable tools like \fBdnstable_dump\fR(1) and \fBdnstable_merge\fR(1), or with the \fBdnstable_reader\fR(3) API\&. Since they are in MTBL format, they can also be read with the \fBmtbl_reader\fR(3) API\&.
 .sp

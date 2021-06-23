@@ -81,7 +81,7 @@ static uint64_t			max_time_last_dnssec;
 
 static struct timespec		start_time;
 static uint64_t			count_messages;
-static uint64_t			count_entries;
+static uint64_t			count_entries_dns;
 static uint64_t			count_entries_dnssec;
 static uint64_t			count_entries_merged;
 
@@ -114,16 +114,16 @@ do_stats(void)
 
 	fprintf(stderr, "processed "
 			"%'" PRIu64 " messages, "
-			"%'" PRIu64 " entries (%'" PRIu64 " DNSSEC, %'" PRIu64 " merged) "
+			"%'" PRIu64 " DNS entries, %'" PRIu64 " DNSSEC entries, %'" PRIu64 " merged "
 			"in %'.2f sec, %'d msg/sec, %'d ent/sec"
 			"\n",
 		count_messages,
-		count_entries,
+		count_entries_dns,
 		count_entries_dnssec,
 		count_entries_merged,
 		t_dur,
 		(int) (count_messages / t_dur),
-		(int) (count_entries / t_dur)
+		(int) (count_entries_dns / t_dur)
 	);
 }
 
@@ -164,7 +164,7 @@ add_entry(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val) {
 				      ubuf_data(key), ubuf_size(key),
 				      ubuf_data(val), ubuf_size(val));
 		assert(res == mtbl_res_success);
-		count_entries += 1;
+		count_entries_dns += 1;
 	}
 }
 
@@ -820,7 +820,7 @@ main(int argc, char **argv)
 	do_write();
 	do_stats();
 
-	if (count_entries == 0) {
+	if (count_entries_dns == 0) {
 		fprintf(stderr, "no DNS entries generated, unlinking %s\n", db_dns_fname);
 		unlink(db_dns_fname);
 	}

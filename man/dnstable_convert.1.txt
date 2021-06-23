@@ -25,7 +25,9 @@ compability.
 
 ^dnstable_convert^ will create both the 'DB-DNS-FILE' and
 'DB-DNSSEC-FILE', and will abort if either exists. If the input file
-contains no DNSSEC-related records, 'DB-DNSSEC-FILE' will be removed.
+contains no DNS-related records, 'DB-DNS-FILE' will be removed. Conversely,
+if the input file contains no DNSSEC-related records, 'DB-DNSSEC-FILE'
+will be removed.
 
 The output files produced by ^dnstable_convert^ are suitable for use with other
 dnstable tools like ^dnstable_dump^(1) and ^dnstable_merge^(1), or with the
