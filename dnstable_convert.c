@@ -164,8 +164,8 @@ add_entry(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val) {
 				      ubuf_data(key), ubuf_size(key),
 				      ubuf_data(val), ubuf_size(val));
 		assert(res == mtbl_res_success);
+		count_entries += 1;
 	}
-	count_entries += 1;
 }
 
 static size_t
