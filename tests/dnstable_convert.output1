@@ -1,9 +1,9 @@
 dnstable_convert: reading input data
-processed 1 messages, 8 entries (0 DNSSEC, 0 merged)
+processed 1 messages, 8 DNS entries, 0 DNSSEC entries, 0 merged
 dnstable_convert: writing tables
-wrote 0 entries
+wrote 5 entries
 dnstable_convert: finished writing table [dnssec]
-wrote 8 entries
+wrote 13 entries
 dnstable_convert: finished writing table [dns]
-processed 1 messages, 8 entries (0 DNSSEC, 0 merged)
+processed 1 messages, 8 DNS entries, 0 DNSSEC entries, 0 merged
 no DNSSEC entries generated, unlinking foo.dnssec.mtbl
