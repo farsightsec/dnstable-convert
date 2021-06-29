@@ -231,6 +231,29 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 	ubuf_advance(val, pack_triplet(ubuf_data(val), time_first, time_last, count));
 }
 
+/*
+ * value: the RRtype as 8 bit integer if it is less than 256 else as
+ * a 16 bit network-order (little endian) integer
+ */
+static void
+put_rrtype(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
+{
+	assert(dns->rrtype != 0);
+	assert(dns->rrtype <= 65535);
+
+	if (dns->rrtype > 255) {
+		uint16_t rrtype_le = htole16((uint16_t) dns->rrtype);
+		ubuf_reserve(val, sizeof(uint16_t));
+		ubuf_append(val, (uint8_t *) &rrtype_le, sizeof(uint16_t));
+	} else {
+		uint8_t rrtype_1byte = (uint8_t)dns->rrtype;
+		ubuf_reserve(val, sizeof(uint8_t));
+		ubuf_append(val, &rrtype_1byte, sizeof(uint8_t));
+	}
+}
+
+
+
 static void
 process_rrset(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val)
 {
@@ -283,6 +306,9 @@ process_rrset_name_fwd(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val)
 
 	/* key: rrset owner name */
 	ubuf_append(key, dns->rrname.data, dns->rrname.len);
+
+	/* value: the RRtype */
+	put_rrtype(dns, val);
 
 	add_entry(dns, key, val);
 }
@@ -481,6 +507,9 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 		wdns_downcase_name(&downcase);
 	}
 	ubuf_append(key, name, len);
+
+	/* value: the RRtype */
+	put_rrtype(dns, val);
 
 	add_entry(dns, key, val);
 }
