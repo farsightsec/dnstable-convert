@@ -45,8 +45,14 @@ static const struct {
 	uint32_t version;
 } versions[] = {
 	{ ENTRY_TYPE_RRSET, 0 },
-	{ ENTRY_TYPE_RRSET_NAME_FWD, 0 },
+
+	/* ENTRY_TYPE_RRSET_NAME_FWD version 1: add rrtype union as value */
+	{ ENTRY_TYPE_RRSET_NAME_FWD, 1 },
+
+	/* ENTRY_TYPE_RDATA version 1: fix the SRV slicing and add SVCB/HTTPS sliced entries */
 	{ ENTRY_TYPE_RDATA, 1 },
+
+	/* ENTRY_TYPE_RDATA_NAME_REV version 1: add SOA, SVCB, and HTTPS name indexing; add rrtype union as value */
 	{ ENTRY_TYPE_RDATA_NAME_REV, 1 },
 };
 
@@ -233,7 +239,10 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 
 /*
  * value: the RRtype as 8 bit integer if it is less than 256 else as
- * a 16 bit network-order (little endian) integer
+ * a 16 bit network-order (little endian) integer.
+ *
+ * This value may be "upgraded" to an RRtype bitmap in the merging process
+ * -- see dnstable-encoding(5).
  */
 static void
 put_rrtype(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
