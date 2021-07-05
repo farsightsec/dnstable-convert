@@ -16,6 +16,8 @@ message schema, and the output data will be written to two separate
 MTBL files: the 'DB-DNS-FILE' containing "plain" DNS records, and the
 'DB-DNSSEC-FILE', containing DNSSEC-related records.
 
+If 'NMSG-FILE' has the value '-' then 'stdin' will be read from.
+
 Specifically, all resource records of type DS, RRSIG, NSEC, DNSKEY,
 NSEC3, NSEC3PARAM, DLV, CDS, CDNSKEY, and TA are stored in the
 'DB-DNSSEC-FILE', and resource records of all other types are stored

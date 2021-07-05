@@ -14,7 +14,8 @@ Converts passive DNS data from MTBL format to NMSG format.  The RRSET entries
 in the dnstable MTBL file 'DB-FILE' are converted to NMSG 'sie:dnsdedupe' format
 and written to the output file 'NMSG-FILE'.
 
-^dnstable_unconvert^ will create the file 'NMSG-FILE', which must not exist.
+^dnstable_unconvert^ will create the file 'NMSG-FILE', which must not exist,
+except if 'NMSG-FILE' has the value '-' then 'stdin' will be written to.
 
 If the ^-z^ option is given, ^dnstable_unconvert^ will write compressed data
 to 'NMSG-FILE'.

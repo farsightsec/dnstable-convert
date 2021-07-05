@@ -2,12 +2,12 @@
 .\"     Title: dnstable_convert
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 06/23/2021
+.\"      Date: 07/05/2021
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DNSTABLE_CONVERT" "1" "06/23/2021" "\ \&" "\ \&"
+.TH "DNSTABLE_CONVERT" "1" "07/05/2021" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -35,6 +35,8 @@ dnstable_convert \- convert passive DNS NMSG data to dnstable MTBL format
 .SH "DESCRIPTION"
 .sp
 Converts passive DNS data from NMSG format to MTBL format\&. The input NMSG data in \fINMSG\-FILE\fR must be encoded using the SIE/dnsdedupe message schema, and the output data will be written to two separate MTBL files: the \fIDB\-DNS\-FILE\fR containing "plain" DNS records, and the \fIDB\-DNSSEC\-FILE\fR, containing DNSSEC\-related records\&.
+.sp
+If \fINMSG\-FILE\fR has the value \fI\-\fR then \fIstdin\fR will be read from\&.
 .sp
 Specifically, all resource records of type DS, RRSIG, NSEC, DNSKEY, NSEC3, NSEC3PARAM, DLV, CDS, CDNSKEY, and TA are stored in the \fIDB\-DNSSEC\-FILE\fR, and resource records of all other types are stored in the \fIDB\-DNS\-FILE\fR\&. If the \fB\-D\fR flag is provided then CDS, CDNSKEY, and TLV will also be stored in the \fIDB\-DNS\-FILE\fR file for transition compability\&.
 .sp

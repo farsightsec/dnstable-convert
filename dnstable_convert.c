@@ -238,8 +238,9 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 }
 
 /*
- * value: the RRtype as 8 bit integer if it is less than 256 else as
- * a 16 bit network-order (little endian) integer.
+ * Output the RRtype in a value ubuf, assuming it's in range (1 to 65535).
+ * Express the RRtype as 8-bit integer if it is less than 256 else as
+ * a 16-bit network-order (little endian) integer.
  *
  * This value may be "upgraded" to an RRtype bitmap in the merging process
  * -- see dnstable-encoding(5).
@@ -247,17 +248,16 @@ put_triplet(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 static void
 put_rrtype(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 {
-	assert(dns->rrtype != 0);
-	assert(dns->rrtype <= 65535);
-
-	if (dns->rrtype > 255) {
-		uint16_t rrtype_le = htole16((uint16_t) dns->rrtype);
-		ubuf_reserve(val, sizeof(uint16_t));
-		ubuf_append(val, (uint8_t *) &rrtype_le, sizeof(uint16_t));
-	} else {
-		uint8_t rrtype_1byte = (uint8_t)dns->rrtype;
-		ubuf_reserve(val, sizeof(uint8_t));
-		ubuf_append(val, &rrtype_1byte, sizeof(uint8_t));
+	if (dns->rrtype >= 1 && dns->rrtype <= 65535) {
+		if (dns->rrtype > 255) {
+			uint16_t rrtype_le = htole16((uint16_t) dns->rrtype);
+			ubuf_reserve(val, sizeof(uint16_t));
+			ubuf_append(val, (uint8_t *) &rrtype_le, sizeof(uint16_t));
+		} else {
+			uint8_t rrtype_1byte = (uint8_t)dns->rrtype;
+			ubuf_reserve(val, sizeof(uint8_t));
+			ubuf_append(val, &rrtype_1byte, sizeof(uint8_t));
+		}
 	}
 }
 
@@ -731,11 +731,15 @@ init_nmsg(void)
 
 	res = nmsg_init();
 	assert(res == nmsg_res_success);
-	fd = open(nmsg_fname, O_RDONLY);
-	if (fd < 0) {
-		fprintf(stderr, "Unable to open NMSG input file '%s': %s\n",
-			nmsg_fname, strerror(errno));
-		exit(EXIT_FAILURE);
+	if (strcmp(nmsg_fname, "-") == 0)
+		fd = 0;		/* stdin */
+	else {
+		fd = open(nmsg_fname, O_RDONLY);
+		if (fd < 0) {
+			fprintf(stderr, "Unable to open NMSG input file '%s': %s\n",
+				nmsg_fname, strerror(errno));
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	input = nmsg_input_open_file(fd);

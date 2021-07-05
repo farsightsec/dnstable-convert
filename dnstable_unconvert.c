@@ -91,26 +91,32 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	fd = open(argv[1], O_WRONLY|O_CREAT|O_EXCL, 0640);
-	if (fd < 0) {
-		fprintf(stderr, "open(%s) failed: %s\n", argv[1], strerror(errno));
-		exit(1);
+	const char *input_fname = argv[0];
+	const char *output_fname = argv[1];
+	if (strcmp(output_fname, "-") == 0)
+		fd = 1;		/* stdout */
+	else {
+		fd = open(output_fname, O_WRONLY|O_CREAT|O_EXCL, 0640);
+		if (fd < 0) {
+			fprintf(stderr, "open(%s) failed: %s\n", output_fname, strerror(errno));
+			exit(1);
+		}
 	}
 
 	out = nmsg_output_open_file(fd, NMSG_WBUFSZ_MAX);
 	assert(out != NULL);
 	nmsg_output_set_zlibout(out, zlibout);
 
-	r = mtbl_reader_init(argv[0], NULL);
+	r = mtbl_reader_init(input_fname, NULL);
 	if (r == NULL) {
-		fprintf(stderr, "Failed to open %s as mtbl file\n", argv[0]);
+		fprintf(stderr, "Failed to open %s as mtbl file\n", input_fname);
 		exit(1);
 	}
 
 	it = mtbl_source_get_prefix(mtbl_reader_source(r), (const uint8_t *)"\x00", 1);
 	assert(it != NULL);
 
-	fprintf(stderr, "Reading RRSets from %s into nmsg file %s\n", argv[0], argv[1]);
+	fprintf(stderr, "Reading RRSets from %s into nmsg file %s\n", input_fname, output_fname);
 	nmsg_timespec_get(&start_time);
 
 	while (mtbl_iter_next(it, &key, &len_key, &val, &len_val) == mtbl_res_success) {
