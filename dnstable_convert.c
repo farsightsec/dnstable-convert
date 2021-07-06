@@ -413,6 +413,10 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 		if (res != wdns_res_success)
 			return;
 
+		/* check for a len that is longer than the data left in the packet */
+		if (offset + len > dns->rdata[i].len)
+			return;
+
 		/* key: downcased target name */
 		ubuf_reserve(key, len);
 		downcase.data = ubuf_ptr(key);
@@ -498,6 +502,10 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 	}
 
 	if (dns->rdata[i].len == 0 || dns->rdata[i].len <= offset)
+		return;
+
+	/* check for a len that is longer than the data left in the packet */
+	if (offset + len > dns->rdata[i].len)
 		return;
 
 	/* clear key, val */
