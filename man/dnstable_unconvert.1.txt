@@ -15,7 +15,7 @@ in the dnstable MTBL file 'DB-FILE' are converted to NMSG 'sie:dnsdedupe' format
 and written to the output file 'NMSG-FILE'.
 
 ^dnstable_unconvert^ will create the file 'NMSG-FILE', which must not exist,
-except if 'NMSG-FILE' has the value '-' then 'stdin' will be written to.
+except if 'NMSG-FILE' has the value '-' then 'stdout' will be written to.
 
 If the ^-z^ option is given, ^dnstable_unconvert^ will write compressed data
 to 'NMSG-FILE'.

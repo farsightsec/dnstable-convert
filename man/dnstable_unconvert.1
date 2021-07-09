@@ -2,12 +2,12 @@
 .\"     Title: dnstable_unconvert
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 07/05/2021
+.\"      Date: 07/09/2021
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DNSTABLE_UNCONVERT" "1" "07/05/2021" "\ \&" "\ \&"
+.TH "DNSTABLE_UNCONVERT" "1" "07/09/2021" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -36,6 +36,6 @@ dnstable_unconvert \- convert dnstable MTBL data to passive DNS NMSG format
 .sp
 Converts passive DNS data from MTBL format to NMSG format\&. The RRSET entries in the dnstable MTBL file \fIDB\-FILE\fR are converted to NMSG \fIsie:dnsdedupe\fR format and written to the output file \fINMSG\-FILE\fR\&.
 .sp
-\fBdnstable_unconvert\fR will create the file \fINMSG\-FILE\fR, which must not exist, except if \fINMSG\-FILE\fR has the value \fI\-\fR then \fIstdin\fR will be written to\&.
+\fBdnstable_unconvert\fR will create the file \fINMSG\-FILE\fR, which must not exist, except if \fINMSG\-FILE\fR has the value \fI\-\fR then \fIstdout\fR will be written to\&.
 .sp
 If the \fB\-z\fR option is given, \fBdnstable_unconvert\fR will write compressed data to \fINMSG\-FILE\fR\&.
