@@ -373,7 +373,7 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 {
 	uint8_t name[WDNS_MAXLEN_NAME];
 	wdns_name_t downcase;
-	size_t offset, len;
+	size_t offset = 0, len;
 	wdns_res res;
 
 	switch (dns->rrtype) {
@@ -457,7 +457,7 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 static void
 process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 {
-	size_t offset, len = dns->rdata[i].len;
+	size_t offset = 0, len = dns->rdata[i].len;
 	uint8_t name[WDNS_MAXLEN_NAME];
 	wdns_name_t downcase;
 	bool do_downcase = false;
