@@ -60,7 +60,8 @@ int main(int argc, char **argv) {
 	nmsg_res nres;
 	bool zlibout = false;
 	const char *progname = argv[0];
-
+	const char *input_fname;
+	const char *output_fname;
 	struct mtbl_reader *r;
 	struct mtbl_iter *it;
 	const uint8_t *key, *val;
@@ -91,10 +92,11 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	const char *input_fname = argv[0];
-	const char *output_fname = argv[1];
+	input_fname = argv[0];
+	output_fname = argv[1];
+
 	if (strcmp(output_fname, "-") == 0)
-		fd = 1;		/* stdout */
+		fd = STDOUT_FILENO;
 	else {
 		fd = open(output_fname, O_WRONLY|O_CREAT|O_EXCL, 0640);
 		if (fd < 0) {

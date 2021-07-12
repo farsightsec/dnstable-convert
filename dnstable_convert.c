@@ -740,7 +740,7 @@ init_nmsg(void)
 	res = nmsg_init();
 	assert(res == nmsg_res_success);
 	if (strcmp(nmsg_fname, "-") == 0)
-		fd = 0;		/* stdin */
+		fd = STDIN_FILENO;
 	else {
 		fd = open(nmsg_fname, O_RDONLY);
 		if (fd < 0) {
