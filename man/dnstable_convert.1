@@ -2,12 +2,12 @@
 .\"     Title: dnstable_convert
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 07/05/2021
+.\"      Date: 07/13/2021
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DNSTABLE_CONVERT" "1" "07/05/2021" "\ \&" "\ \&"
+.TH "DNSTABLE_CONVERT" "1" "07/13/2021" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 dnstable_convert \- convert passive DNS NMSG data to dnstable MTBL format
 .SH "SYNOPSIS"
 .sp
-\fBdnstable_convert\fR [\fB\-D\fR] \fINMSG\-FILE\fR \fIDB\-DNS\-FILE\fR \fIDB\-DNSSEC\-FILE\fR
+\fBdnstable_convert\fR [\fB\-D\fR] [\fB\-c TYPE\fR] [\fB\-l LEVEL\fR] [\fB\-m #\fR] \fINMSG\-FILE\fR \fIDB\-DNS\-FILE\fR \fIDB\-DNSSEC\-FILE\fR
 .SH "DESCRIPTION"
 .sp
 Converts passive DNS data from NMSG format to MTBL format\&. The input NMSG data in \fINMSG\-FILE\fR must be encoded using the SIE/dnsdedupe message schema, and the output data will be written to two separate MTBL files: the \fIDB\-DNS\-FILE\fR containing "plain" DNS records, and the \fIDB\-DNSSEC\-FILE\fR, containing DNSSEC\-related records\&.
@@ -50,4 +50,20 @@ By default, \fBdnstable_convert\fR will use \fB/var/tmp/\fR to store temporary m
 \fB\-D\fR
 .RS 4
 This flag enables a transitional compatibility mode described above\&.
+.RE
+.PP
+\fB\-c TYPE\fR
+.RS 4
+Use TYPE compression (Default: zlib)\&.
+.RE
+.PP
+\fB\-l LEVEL\fR
+.RS 4
+Use numeric LEVEL of compression\&. Default varies based on TYPE\&.
+.RE
+.PP
+\fB\-m #\fR
+.RS 4
+This flag takes a positive integer value\&. Specifies the maximum amount of memory to use for in\-memory sorting, in megabytes\&. Defaults to 2048 megabytes (e\&.g\&. 2 gigabytes)\&. See the
+\fBmtbl_sorter\fR(3) API\&.
 .RE

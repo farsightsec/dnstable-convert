@@ -6,7 +6,7 @@ dnstable_convert - convert passive DNS NMSG data to dnstable MTBL format
 
 == SYNOPSIS ==
 
-^dnstable_convert^ [^-D^] 'NMSG-FILE' 'DB-DNS-FILE' 'DB-DNSSEC-FILE'
+^dnstable_convert^ [^-D^] [^-c TYPE^] [^-l LEVEL^] [^-m #^] 'NMSG-FILE' 'DB-DNS-FILE' 'DB-DNSSEC-FILE'
 
 == DESCRIPTION ==
 
@@ -46,3 +46,16 @@ be useful.
 
 ^-D^::
     This flag enables a transitional compatibility mode described above.
+
+^-c TYPE^::
+    Use TYPE compression (Default: zlib).
+
+^-l LEVEL^::
+    Use numeric LEVEL of compression. Default varies based on TYPE.
+
+^-m #^::
+    This flag takes a positive integer value.  Specifies the maximum
+    amount of memory to use for in-memory sorting, in megabytes.
+    Defaults to 2048 megabytes (e.g. 2 gigabytes).  See the
+    ^mtbl_sorter^(3) API.
+

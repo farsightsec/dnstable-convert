@@ -761,13 +761,17 @@ init_nmsg(void)
 }
 
 static void
-init_mtbl(mtbl_compression_type compression, int level)
+init_mtbl(mtbl_compression_type compression, int level, size_t mem_mb)
 {
 	struct mtbl_sorter_options *sopt;
 	struct mtbl_writer_options *wopt;
 
 	sopt = mtbl_sorter_options_init();
-	mtbl_sorter_options_set_max_memory(sopt, 2UL * 1024*1024*1024);
+
+	if (mem_mb == 0)
+		mem_mb = 2UL * 1024;
+	mtbl_sorter_options_set_max_memory(sopt, (mem_mb*1024*1024));
+
 	mtbl_sorter_options_set_merge_func(sopt, merge_func, NULL);
 	if (getenv("VARTMPDIR"))
 		mtbl_sorter_options_set_temp_dir(sopt, getenv("VARTMPDIR"));
@@ -801,17 +805,19 @@ init_mtbl(mtbl_compression_type compression, int level)
 static void
 usage(const char *name)
 {
-	fprintf(stderr, "Usage: %s [-D] [ -c compression ] [ -l level ] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
-	fprintf(stderr, "Options:\n");
-	fprintf(stderr, " -D:       Put CDS, CDNSKEY, and TA RRSets in both outputs\n");
-	fprintf(stderr, " -c TYPE:  Use TYPE compression (Default: zlib)\n");
-	fprintf(stderr, " -l LEVEL: Use numeric LEVEL of compression.\n"
-			"             Default varies based on TYPE.\n");
+	fprintf(stderr, "Usage: %s [-D] [-c compression] [-l level] [-m megabytes] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
+	fprintf(stderr, "Options:\n"
+	" -D:       Put CDS, CDNSKEY, and TA RRSets in both outputs\n"
+	" -c TYPE:  Use TYPE compression (Default: zlib)\n"
+	" -l LEVEL: Use numeric LEVEL of compression.\n"
+	"           Default varies based on TYPE.\n"
+	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n");
 }
 
 int
 main(int argc, char **argv)
 {
+	int mmb = 0;
 	mtbl_compression_type compression = MTBL_COMPRESSION_ZLIB;
 	int compression_level = DEFAULT_COMPRESSION_LEVEL;
 	const char *name = argv[0];
@@ -819,7 +825,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "Dc:l:")) != -1) {
+	while ((c = getopt(argc, argv, "Dc:l:m:")) != -1) {
 		mtbl_res res;
 		char *end;
 
@@ -839,6 +845,14 @@ main(int argc, char **argv)
 			compression_level = strtol(optarg, &end, 10);
 			if (*end != '\0') {
 				fprintf(stderr, "Invalid compression level '%s'\n", optarg);
+				usage(name);
+				return (EXIT_FAILURE);
+			}
+			break;
+		case 'm':
+			mmb = strtol(optarg, &end, 10);
+			if (*end != '\0' || mmb <= 0) {
+				fprintf(stderr, "Invalid max mega bytes '%s'\n", optarg);
 				usage(name);
 				return (EXIT_FAILURE);
 			}
@@ -863,7 +877,7 @@ main(int argc, char **argv)
 	db_dnssec_fname = argv[2];
 
 	init_nmsg();
-	init_mtbl(compression, compression_level);
+	init_mtbl(compression, compression_level, (size_t)mmb);
 	nmsg_timespec_get(&start_time);
 	do_read();
 	nmsg_input_close(&input);
