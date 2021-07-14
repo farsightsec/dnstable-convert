@@ -413,7 +413,12 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 		if (res != wdns_res_success)
 			return;
 
-		/* check for a len that is longer than the data left in the packet */
+		/*
+		 * wdns_len_uname can return a length one greater
+		 * than the buffer length if the buffer ends with
+		 * a nonzero length label. Treat this case as a malformed
+		 * name.
+		 */
 		if (offset + len > dns->rdata[i].len)
 			return;
 
