@@ -131,8 +131,16 @@ int main(int argc, char **argv) {
 		m = entry_to_nmsg(e, val, len_val);
 
 		nres = nmsg_output_write(out, m);
-		assert(nres == nmsg_res_success);
 
+		if (nres != nmsg_res_success) {
+			if (nres == nmsg_res_errno)
+				fprintf(stderr, "nmsg_output_write() failed, nres=%s, errno=%d\n",
+					nmsg_res_lookup(nres), (int)errno);
+			else
+				fprintf(stderr, "nmsg_output_write() failed, nres=%s\n",
+					nmsg_res_lookup(nres));
+			exit(2);
+		}
 		nmsg_message_destroy(&m);
 		dnstable_entry_destroy(&e);
 
@@ -146,7 +154,6 @@ int main(int argc, char **argv) {
 	nmsg_output_close(&out);
 	mtbl_iter_destroy(&it);
 	mtbl_reader_destroy(&r);
-
 }
 
 static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *data, size_t len_data) {

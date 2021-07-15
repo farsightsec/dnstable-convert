@@ -19,3 +19,11 @@ except if 'NMSG-FILE' has the value '-' then 'stdout' will be written to.
 
 If the ^-z^ option is given, ^dnstable_unconvert^ will write compressed data
 to 'NMSG-FILE'.
+
+== EXIT STATUS ==
+
+^dnstable_unconvert^ will exit with ^0^ if the unconversion was successful.
+
+It will exit with ^1^ if the unconversion failed during setup.
+
+It will exit with ^2^ if the unconversion failed while writing the output.
