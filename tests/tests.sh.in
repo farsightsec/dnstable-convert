@@ -19,7 +19,7 @@ rm -f @abs_builddir@/srv.dns.mtbl
 echo -n "dnstable_convert of a SRV record set to mtbl: "
 # NOTE: no DNSSEC records so the dnssec file will be created and removed
 # strip off the timing for comparison
-$DNSTABLE_CONVERT @abs_srcdir@/srv.dnsdedupe.nmsg @abs_builddir@/srv.dns.mtbl foo.dnssec.mtbl 2>&1 | sed -e "s/ in [0-9].*sec.*$//" > @abs_builddir@/dnstable_convert.output1.tmp
+$DNSTABLE_CONVERT @abs_srcdir@/srv.dnsdedupe.nmsg @abs_builddir@/srv.dns.mtbl foo.dnssec.mtbl 2>&1 | sed -e "s/ in [0-9].*sec.*$//" | sort > @abs_builddir@/dnstable_convert.output1.tmp
 cmp -s @abs_srcdir@/dnstable_convert.output1 @abs_builddir@/dnstable_convert.output1.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
