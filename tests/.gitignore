@@ -1,0 +1,12 @@
+dnstable_convert.output1.tmp
+dnstable_dump.rdata.output1.tmp
+dnstable_dump.rdata.output2.tmp
+dnstable_dump.rrset.output1.tmp
+dnstable_dump.rrset.output2.tmp
+dnstable_lookup.rdata.name.output2.tmp
+dnstable_lookup.rdata.name.soa.output1.tmp
+dnstable_lookup.rdata.name.srv.output1.tmp
+srv_soa.dns.mtbl
+tests.sh
+tests.sh.log
+tests.sh.trs
