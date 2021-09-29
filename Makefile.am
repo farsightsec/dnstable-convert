@@ -68,21 +68,24 @@ EXTRA_DIST += \
 
 TESTS = tests/tests.sh
 EXTRA_DIST += \
-	tests/srv.dnsdedupe.json \
-	tests/srv.dnsdedupe.nmsg \
-	tests/broken-srv.dns.mtbl \
+	tests/broken-srv_soa.dns.mtbl \
 	tests/dnstable_convert.output1 \
 	tests/dnstable_dump.rdata.output1 \
 	tests/dnstable_dump.rrset.output1 \
-	tests/dnstable_lookup.rdata.name.output1
+	tests/dnstable_lookup.rdata.name.soa.output1 \
+	tests/dnstable_lookup.rdata.name.srv.output1 \
+	tests/srv_soa.dnsdedupe.json \
+	tests/srv_soa.dnsdedupe.nmsg
 DISTCLEANFILES += \
-	tests/srv.dns.mtbl \
 	tests/dnstable_convert.output1.tmp \
 	tests/dnstable_dump.rdata.output1.tmp \
 	tests/dnstable_dump.rdata.output2.tmp \
 	tests/dnstable_dump.rrset.output1.tmp \
 	tests/dnstable_dump.rrset.output2.tmp \
-	tests/dnstable_lookup.rdata.name.output1.tmp \
-	tests/dnstable_lookup.rdata.name.output2.tmp
+	tests/dnstable_lookup.rdata.name.soa.output1.tmp \
+	tests/dnstable_lookup.rdata.name.soa.output2.tmp \
+	tests/dnstable_lookup.rdata.name.srv.output1.tmp \
+	tests/dnstable_lookup.rdata.name.srv.output2.tmp \
+	tests/srv_soa.dns.mtbl
 
 check_PROGRAMS =
