@@ -185,6 +185,7 @@ static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *dat
 	assert(nres == nmsg_res_success);
 
 	dres = dnstable_entry_get_bailiwick(e, &bailiwick, &len_bailiwick);
+	assert(dres == dnstable_res_success);
 	nres = nmsg_message_set_field(m, "bailiwick", 0, bailiwick, len_bailiwick);
 	assert(nres == nmsg_res_success);
 
