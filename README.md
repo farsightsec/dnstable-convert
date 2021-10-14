@@ -1,10 +1,12 @@
-dnstable\_convert: conversion utility for passive DNS data
+dnstable\_convert: conversion utilities for passive DNS data
 ======================================================================
 
 Introduction
 ------------
 
 `dnstable_convert` is a conversion utility for passive DNS data in dnstable format.  It was split out of [dnstable](https://github.com/farsightsec/dnstable/) to reduce the dependencies of `dnstable`.
+
+`dnstable_unconvert` converts the RRSET entries of a dnstable file to the equivalent NMSG format.
 
 `dnstable_convert` has the following dependencies:
 
