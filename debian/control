@@ -13,6 +13,7 @@ Build-Depends:
  libmtbl-dev (>= 1.1.0),
  libnmsg-dev (>= 0.9.0),
  libwdns-dev (>= 0.6.0),
+ nmsg-msg-module-sie,
  nmsg-msg-module-sie-dev (>= 0.17.0-2),
  pkg-config,
  xmlto
