@@ -1,3 +1,57 @@
+dnstable-convert (0.11.0)
+
+  * Add new tool dnstable_unconvert which converts the RRSET entries
+    of a dnstable file to the equivalent NMSG format.
+
+  * Add SVCB and HTTPS records indexing support, based upon
+    draft-ietf-dnsop-svcb-https-07. Note that the hostname portion in
+    the RDATA is downcased in the sliced encoding and reversed name entry.
+
+  * Put CDS, CDNSKEY, and TA resource record types into dnssec.*
+    output files.  To duplicate these three DNSSEC types to the dns.*
+    output files for compatibility, use the new dnstable_convert -D
+    option.
+
+  * Put RRtype in the currently empty value portion of RRSET_NAME_FWD
+    and RDATA_NAME_REV indexes if it's in range (1 to 65535). Use
+    an 8-bit integer if it is less than 256, else uses a 16-bit little
+    endian integer.
+
+  * Generate ENTRY_TYPE_TIME_RANGE and ENTRY_TYPE_VERSION metadata
+    entries in output dnstable files.
+
+  * The versions of the following entries are:
+    ENTRY_TYPE_RRSET = 0
+    // Initial version.
+
+    ENTRY_TYPE_RRSET_NAME_FWD = 1
+    // Add rrtype union as value.
+
+    ENTRY_TYPE_RDATA = 1
+    // Fix the SRV slicing and add SVCB/HTTPS sliced entries.
+
+    ENTRY_TYPE_RDATA_NAME_REV = 1
+    // Add SOA, SVCB, and HTTPS name indexing; add rrtype union as value.
+
+  * dnstable_convert: use input file - (dash) for standard input (stdin).
+
+  * dnstable_convert: add -c compression option to set type of
+    compression used. This defaults to zlib.
+
+  * dnstable_convert: add -l compression option to set compression
+    level.
+
+  * dnstable_convert: add -m option to specify maximum megabytes of
+    memory to use for in-memory sorting. It defaults to
+    2048 MB.
+
+  * Various changes to the status output from dnstable_convert when
+    it runs.
+
+  * Documentation and testing improvements.
+
+ -- Farsight Security, Inc. <software@farsightsecurity.com>  Thu, 14 Oct 2021 14:00:43 -0400
+
 dnstable-convert (0.10.0)
 
   * Separate dnstable_convert from dnstable repository version 0.9.1-3

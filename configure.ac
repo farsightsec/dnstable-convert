@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT([dnstable-convert], [0.10.0])
+AC_INIT([dnstable-convert], [0.11.0])
 AC_CONFIG_SRCDIR([dnstable_convert.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability silent-rules subdir-objects])
