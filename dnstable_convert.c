@@ -385,6 +385,9 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 	case WDNS_TYPE_SRV:
 		offset = 6;	/* skip SRV priority, weight, port */
 		break;
+        case WDNS_TYPE_NSEC:
+		offset = 0;	/* skip later */
+		break;
 	default:
 		return;
 	}
@@ -407,6 +410,7 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 		break;
 	case WDNS_TYPE_SVCB:
 	case WDNS_TYPE_HTTPS:
+        case WDNS_TYPE_NSEC:
 		res = wdns_len_uname(dns->rdata[i].data + offset,
 				     dns->rdata[i].data + dns->rdata[i].len,
 				     &len);
