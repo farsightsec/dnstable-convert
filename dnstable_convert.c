@@ -470,8 +470,6 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 
 	switch (dns->rrtype) {
 	case WDNS_TYPE_NSEC:
-		do_downcase = true;
-		/* fallthrough */
 	case WDNS_TYPE_SOA:
 		if (len == 0)
 			return;
