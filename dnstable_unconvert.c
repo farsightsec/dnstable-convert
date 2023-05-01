@@ -156,13 +156,35 @@ int main(int argc, char **argv) {
 	mtbl_reader_destroy(&r);
 }
 
+static struct dnstable_entry *cmp_entry;
+
+static int rdata_cmp(const void *a, const void *b) {
+	size_t ia = *(size_t *)a;
+	size_t ib = *(size_t *)b;
+	size_t len_a, len_b;
+	const uint8_t *rdata_a, *rdata_b;
+	dnstable_res dres;
+
+	dres = dnstable_entry_get_rdata(cmp_entry, ia, &rdata_a, &len_a);
+	assert(dres == dnstable_res_success);
+	dres = dnstable_entry_get_rdata(cmp_entry, ib, &rdata_b, &len_b);
+	assert(dres == dnstable_res_success);
+
+	if (len_a < len_b)
+		return -1;
+	if (len_a > len_b)
+		return 1;
+
+	return memcmp(rdata_a, rdata_b, len_a);
+}
+
 static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *data, size_t len_data) {
 	const uint8_t *rrname, *bailiwick;
 	size_t len_rrname, len_bailiwick;
 	uint16_t rrtype;
 	uint16_t rrclass = WDNS_CLASS_IN;
 	uint32_t msgtype = NMSG__SIE__DNS_DEDUPE_TYPE__EXPIRATION;
-	size_t i, n_rdata;
+	size_t i, n_rdata, *indexes;
 	dnstable_res dres;
 	nmsg_res nres;
 
@@ -191,15 +213,23 @@ static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *dat
 
 	dres = dnstable_entry_get_num_rdata(e, &n_rdata);
 	assert(dres == dnstable_res_success);
+
+	indexes = malloc(n_rdata * sizeof(*indexes));
+	assert(indexes != NULL);
+	for (i = 0; i < n_rdata; i++)
+		indexes[i] = i;
+	cmp_entry = e;
+	qsort(indexes, n_rdata, sizeof(*indexes), rdata_cmp);
 	for (i = 0; i < n_rdata; i++) {
 		const uint8_t *rdata;
 		size_t len_rdata;
 
-		dres = dnstable_entry_get_rdata(e, i, &rdata, &len_rdata);
+		dres = dnstable_entry_get_rdata(e, indexes[i], &rdata, &len_rdata);
 		assert(dres == dnstable_res_success);
 		nres = nmsg_message_set_field(m, "rdata", i, rdata, len_rdata);
 		assert(nres == nmsg_res_success);
 	}
+	free(indexes);
 
 	/*
 	 * We decode the value triplet here instead of using the dnstable_entry
