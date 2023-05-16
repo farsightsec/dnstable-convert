@@ -19,11 +19,14 @@
 #include <inttypes.h>
 #include <locale.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/utsname.h>
+#include <sys/resource.h>
 
 #include <dnstable.h>
 #include <mtbl.h>
@@ -73,6 +76,7 @@ static const char		*nmsg_fname;
 static const char		*db_dns_fname;
 static const char		*db_dnssec_fname;
 static bool			migrate_dnssec;
+static bool			preserve_empty = false;	/* Keep empty dns files? */
 
 static nmsg_input_t		input;
 static struct mtbl_sorter	*sorter_dns;
@@ -108,20 +112,110 @@ static uint64_t			count_entries_merged;
 	case WDNS_TYPE_TA:                 \
 	case WDNS_TYPE_DLV:
 
+/* Display current soft- and hard-limits for # descriptors. */
+static int
+show_fd_limit(FILE *fp, struct rlimit *rl)
+{
+	int ret = getrlimit(RLIMIT_NOFILE, rl);
+
+	if (ret == 0)
+		fprintf(fp, "fd-limit: soft=%lu, hard=%lu\n",
+			(unsigned long) rl->rlim_cur, (unsigned long) rl->rlim_max);
+	else
+		fprintf(fp, "getrlimit() failed, error=%d\n", errno);
+
+	return(ret);
+}
+
+/* Check/increment the descriptor resource limit. */
+static void
+check_fd_limit(FILE *fp)
+{
+	struct rlimit rl;
+	int ret;
+
+	fputs("Checking resource limits\n", fp);
+
+	ret = show_fd_limit(fp, &rl);
+
+	if (ret == 0) {
+		/* Increase soft-limit to hard-limit. */
+		if (rl.rlim_cur < rl.rlim_max) {
+			rl.rlim_cur = rl.rlim_max;
+
+			ret = setrlimit(RLIMIT_NOFILE, &rl);
+			if (ret == 0) {
+				fprintf(fp, "fd-limit: Updated soft-limit\n");
+				show_fd_limit(fp, &rl);
+			}
+			else
+				fprintf(fp, "setrlimit() failed, error=%d\n", errno);
+		}
+	}
+}
+
+static void
+abrt_handler(int sig __attribute__((unused)))
+{
+	int err = errno;
+
+	fprintf(stderr, "ABRT handler called, errno=%d (%s)\n", err, strerror(err));
+	/* Return, allowing a core-file to be produced. */
+}
+
+/* Catch certain signals. */
+static void
+setup_handlers(void)
+{
+	struct sigaction sa = { 0 };
+
+	sigemptyset(&sa.sa_mask);
+
+	/* Catch any assert() failures generated in other libraries. */
+	sa.sa_handler = abrt_handler;
+	sigaction(SIGABRT, &sa, NULL);
+}
+
+/* Show details about startup environment. */
+static int
+show_startup_details(FILE *fp)
+{
+	struct utsname un;
+	struct timeval tv;
+	char timebuf[64];
+	char *startdir;
+
+	uname(&un);
+	gettimeofday(&tv, NULL);
+
+	ctime_r(&tv.tv_sec, timebuf);
+
+	fprintf(fp, "Start: %s", timebuf);
+	fprintf(fp, "Host: %s\n", un.nodename);
+	fprintf(fp, "Kernel: %s %s %s %s\n", un.sysname, un.machine, un.release, un.version);
+	fprintf(fp, "Run by: UID=%u EUID=%u\n", getuid(), geteuid());
+	startdir = get_current_dir_name();
+	fprintf(fp, "Start dir: %s\n", startdir);
+	free(startdir);
+	fputc('\n', fp);
+}
+
 static void
 do_stats(void)
 {
 	struct timespec dur;
 	double t_dur;
+	int fd;
 
 	nmsg_timespec_get(&dur);
 	nmsg_timespec_sub(&start_time, &dur);
 	t_dur = nmsg_timespec_to_double(&dur);
+	fd = dup(2);
 
 	fprintf(stderr, "processed "
 			"%'" PRIu64 " messages, "
 			"%'" PRIu64 " DNS entries, %'" PRIu64 " DNSSEC entries, %'" PRIu64 " merged "
-			"in %'.2f sec, %'d msg/sec, %'d ent/sec"
+			"in %'.2f sec, %'d msg/sec, %'d ent/sec, fd=%d"
 			"\n",
 		count_messages,
 		count_entries_dns,
@@ -129,8 +223,9 @@ do_stats(void)
 		count_entries_merged,
 		t_dur,
 		(int) (count_messages / t_dur),
-		(int) (count_entries_dns / t_dur)
+		(int) (count_entries_dns / t_dur), fd
 	);
+	close(fd);
 }
 
 static void
@@ -816,7 +911,8 @@ usage(const char *name)
 	" -c TYPE:  Use TYPE compression (Default: zlib)\n"
 	" -l LEVEL: Use numeric LEVEL of compression.\n"
 	"           Default varies based on TYPE.\n"
-	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n");
+	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n"
+	" -p:       Preserve empty DNS/DNSSEC files.\n");
 }
 
 int
@@ -830,7 +926,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "Dc:l:m:")) != -1) {
+	while ((c = getopt(argc, argv, "Dc:l:m:p")) != -1) {
 		mtbl_res res;
 		char *end;
 
@@ -862,6 +958,9 @@ main(int argc, char **argv)
 				return (EXIT_FAILURE);
 			}
 			break;
+		case 'p':
+			preserve_empty = true;
+			break;
 		case 'h':
 		case '?':
 		default:
@@ -881,6 +980,11 @@ main(int argc, char **argv)
 	db_dns_fname = argv[1];
 	db_dnssec_fname = argv[2];
 
+	show_startup_details(stderr);
+	check_fd_limit(stderr);
+
+	setup_handlers();
+
 	init_nmsg();
 	init_mtbl(compression, compression_level, (size_t)mmb);
 	nmsg_timespec_get(&start_time);
@@ -889,12 +993,12 @@ main(int argc, char **argv)
 	do_write();
 	do_stats();
 
-	if (count_entries_dns == 0) {
+	if (count_entries_dns == 0 && !preserve_empty) {
 		fprintf(stderr, "no DNS entries generated, unlinking %s\n", db_dns_fname);
 		unlink(db_dns_fname);
 	}
 
-	if (count_entries_dnssec == 0) {
+	if (count_entries_dnssec == 0 && !preserve_empty) {
 		fprintf(stderr, "no DNSSEC entries generated, unlinking %s\n", db_dnssec_fname);
 		unlink(db_dnssec_fname);
 	}
