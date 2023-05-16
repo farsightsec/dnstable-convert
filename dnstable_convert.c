@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <sys/utsname.h>
 #include <sys/resource.h>
 
@@ -180,23 +181,24 @@ setup_handlers(void)
 static int
 show_startup_details(FILE *fp)
 {
+	char buffer[PATH_MAX];
 	struct utsname un;
 	struct timeval tv;
-	char timebuf[64];
-	char *startdir;
+	const char *startdir;
 
 	uname(&un);
 	gettimeofday(&tv, NULL);
 
-	ctime_r(&tv.tv_sec, timebuf);
+	ctime_r(&tv.tv_sec, buffer);
 
-	fprintf(fp, "Start: %s", timebuf);
+	fprintf(fp, "Start: %s", buffer);
 	fprintf(fp, "Host: %s\n", un.nodename);
 	fprintf(fp, "Kernel: %s %s %s %s\n", un.sysname, un.machine, un.release, un.version);
-	fprintf(fp, "Run by: UID=%u EUID=%u\n", getuid(), geteuid());
-	startdir = get_current_dir_name();
+	fprintf(fp, "Run by: UID=%lu EUID=%lu\n", (unsigned long) getuid(), (unsigned long) geteuid());
+	startdir = getcwd(buffer, sizeof(buffer));
+	if (startdir == NULL)
+		startdir = "<Unknown>";
 	fprintf(fp, "Start dir: %s\n", startdir);
-	free(startdir);
 	fputc('\n', fp);
 }
 
