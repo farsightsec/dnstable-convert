@@ -1,3 +1,18 @@
+dnstable-convert (0.12.0-1) debian-fsi; urgency=medium
+
+  * dnstable_convert: add -p option to not remove generated mtbl
+    file with no records.
+
+  * dnstable_convert: additional logging at startup and exit.
+
+  * dnstable_convert: increase file descriptor resource limit at
+    startup.
+
+  * dnstable_unconvert: sort rdata values in "wdns_sort_rrset" order
+    for consistency with other dnstable data sources.
+
+ -- Farsight Security, Inc. <software@farsightsecurity.com>  Mon, 26 Jun 2023 18:17:24 +0000
+
 dnstable-convert (0.11.0-1) debian-fsi; urgency=medium
 
   * Add new tool dnstable_unconvert which converts the RRSET entries
