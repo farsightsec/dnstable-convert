@@ -70,22 +70,43 @@ TESTS = tests/tests.sh
 EXTRA_DIST += \
 	tests/broken-srv_soa.dns.mtbl \
 	tests/dnstable_convert.output1 \
+	tests/dnstable_convert.output2 \
+	tests/dnstable_convert.output3 \
 	tests/dnstable_dump.rdata.output1 \
+	tests/dnstable_dump.rdata.output3 \
 	tests/dnstable_dump.rrset.output1 \
+	tests/dnstable_dump.rrset.output3 \
+	tests/dnstable_dump.rrset.output5 \
 	tests/dnstable_lookup.rdata.name.soa.output1 \
 	tests/dnstable_lookup.rdata.name.srv.output1 \
+	tests/dnstable_unconvert.output1 \
 	tests/srv_soa.dnsdedupe.json \
-	tests/srv_soa.dnsdedupe.nmsg
+	tests/srv_soa.dnsdedupe.nmsg \
+	tests/unordered-rdata.dnsdedupe.json \
+	tests/unordered-rdata.dnsdedupe.json.nmsg
+
 DISTCLEANFILES += \
 	tests/dnstable_convert.output1.tmp \
+	tests/dnstable_convert.output2.tmp \
+	tests/dnstable_convert.output3.tmp \
 	tests/dnstable_dump.rdata.output1.tmp \
 	tests/dnstable_dump.rdata.output2.tmp \
+	tests/dnstable_dump.rdata.output3.tmp \
+	tests/dnstable_dump.rdata.output4.tmp \
 	tests/dnstable_dump.rrset.output1.tmp \
 	tests/dnstable_dump.rrset.output2.tmp \
+	tests/dnstable_dump.rrset.output3.tmp \
+	tests/dnstable_dump.rrset.output4.tmp \
+	tests/dnstable_dump.rrset.output5.tmp \
 	tests/dnstable_lookup.rdata.name.soa.output1.tmp \
 	tests/dnstable_lookup.rdata.name.soa.output2.tmp \
 	tests/dnstable_lookup.rdata.name.srv.output1.tmp \
 	tests/dnstable_lookup.rdata.name.srv.output2.tmp \
-	tests/srv_soa.dns.mtbl
+	tests/dnstable_unconvert.output1.tmp \
+	tests/ordered-rdata.dnsdedupe.dns.mtbl \
+	tests/ordered-rdata.dnsdedupe.dns.nmsg \
+	tests/ordered-rdata.dnsdedupe.dnssec.mtbl \
+	tests/srv_soa.dns.mtbl \
+	tests/unordered-rdata.dnsdedupe.dns.mtbl
 
 check_PROGRAMS =

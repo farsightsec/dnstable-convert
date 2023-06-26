@@ -7,11 +7,10 @@ dnstable_convert: writing tables
 fd-limit: soft=1234, hard=1234
 Host: hostname
 Kernel: sysname machine release version
-no DNSSEC entries generated, unlinking foo.dnssec.mtbl
-processed 2 messages, 12 DNS entries, 0 DNSSEC entries, 0 merged in 0.00 sec, 27,879 msg/sec, 167,275 ent/sec, fd=4
-processed 2 messages, 12 DNS entries, 0 DNSSEC entries, 0 merged in 0.00 sec, 27,879 msg/sec, 167,275 ent/sec, fd=4
+processed 2 messages, 32 DNS entries, 0 DNSSEC entries, 0 merged in 0.00 sec, 27,879 msg/sec, 167,275 ent/sec, fd=4
+processed 2 messages, 32 DNS entries, 0 DNSSEC entries, 4 merged in 0.00 sec, 27,879 msg/sec, 167,275 ent/sec, fd=4
 Run by: UID=1000 EUID=1000
 Start dir: /build/dir
 Start: Mon Jun  5 12:58:30 2023
-wrote 17 entries in 0.00 sec, 130,240 ent/sec [dns]
+wrote 33 entries in 0.00 sec, 130,240 ent/sec [dns]
 wrote 5 entries in 0.00 sec, 130,240 ent/sec [dnssec]
