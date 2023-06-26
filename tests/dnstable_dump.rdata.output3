@@ -1,0 +1,20 @@
+host.example.org. IN MX 0 a.b.c.d.
+host.example.org. IN MX 10 zero.example.com.
+host.example.org. IN MX 10 alpha.example.net.
+host.example.org. IN MX 25 zero.example.com.
+host.example.org. IN MX 25 zero.example.net.
+host.example.org. IN MX 25 alpha.example.net.
+host.example.org. IN MX 100 alpha.example.net.
+host.example.org. IN A 1.2.3.4
+host.example.org. IN MX 500 a.b.c.
+host.example.org. IN MX 0 a.b.c.d.
+host.example.org. IN MX 500 a.b.c.
+host.example.org. IN MX 10 zero.example.com.
+host.example.org. IN MX 25 zero.example.com.
+host.example.org. IN MX 25 zero.example.net.
+host.example.org. IN MX 10 alpha.example.net.
+host.example.org. IN MX 25 alpha.example.net.
+host.example.org. IN MX 100 alpha.example.net.
+host.example.org. IN A 127.127.127.127
+host.example.org. IN A 255.1.2.3
+host.example.org. IN A 255.255.255.255
