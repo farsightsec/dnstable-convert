@@ -6,7 +6,7 @@ dnstable_convert - convert passive DNS NMSG data to dnstable MTBL format
 
 == SYNOPSIS ==
 
-^dnstable_convert^ [^-D^] [^-c TYPE^] [^-l LEVEL^] [^-m #^] 'NMSG-FILE' 'DB-DNS-FILE' 'DB-DNSSEC-FILE'
+^dnstable_convert^ [^-Dp^] [^-c TYPE^] [^-l LEVEL^] [^-m #^] 'NMSG-FILE' 'DB-DNS-FILE' 'DB-DNSSEC-FILE'
 
 == DESCRIPTION ==
 
@@ -29,7 +29,8 @@ compability.
 'DB-DNSSEC-FILE', and will abort if either exists. If the input file
 contains no DNS-related records, 'DB-DNS-FILE' will be removed. Conversely,
 if the input file contains no DNSSEC-related records, 'DB-DNSSEC-FILE'
-will be removed.
+will be removed. If the ^-p^ flag is provided then MTBL files without
+records are not removed.
 
 The output files produced by ^dnstable_convert^ are suitable for use with other
 dnstable tools like ^dnstable_dump^(1) and ^dnstable_merge^(1), or with the
@@ -59,3 +60,5 @@ be useful.
     Defaults to 2048 megabytes (e.g. 2 gigabytes).  See the
     ^mtbl_sorter^(3) API.
 
+^-p^::
+    Preserve empty DNS/DNSSEC MTBL files.

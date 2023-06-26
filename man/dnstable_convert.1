@@ -2,12 +2,12 @@
 .\"     Title: dnstable_convert
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 07/13/2021
+.\"      Date: 06/06/2023
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DNSTABLE_CONVERT" "1" "07/13/2021" "\ \&" "\ \&"
+.TH "DNSTABLE_CONVERT" "1" "06/06/2023" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 dnstable_convert \- convert passive DNS NMSG data to dnstable MTBL format
 .SH "SYNOPSIS"
 .sp
-\fBdnstable_convert\fR [\fB\-D\fR] [\fB\-c TYPE\fR] [\fB\-l LEVEL\fR] [\fB\-m #\fR] \fINMSG\-FILE\fR \fIDB\-DNS\-FILE\fR \fIDB\-DNSSEC\-FILE\fR
+\fBdnstable_convert\fR [\fB\-Dp\fR] [\fB\-c TYPE\fR] [\fB\-l LEVEL\fR] [\fB\-m #\fR] \fINMSG\-FILE\fR \fIDB\-DNS\-FILE\fR \fIDB\-DNSSEC\-FILE\fR
 .SH "DESCRIPTION"
 .sp
 Converts passive DNS data from NMSG format to MTBL format\&. The input NMSG data in \fINMSG\-FILE\fR must be encoded using the SIE/dnsdedupe message schema, and the output data will be written to two separate MTBL files: the \fIDB\-DNS\-FILE\fR containing "plain" DNS records, and the \fIDB\-DNSSEC\-FILE\fR, containing DNSSEC\-related records\&.
@@ -40,7 +40,7 @@ If \fINMSG\-FILE\fR has the value \fI\-\fR then \fIstdin\fR will be read from\&.
 .sp
 Specifically, all resource records of type DS, RRSIG, NSEC, DNSKEY, NSEC3, NSEC3PARAM, DLV, CDS, CDNSKEY, and TA are stored in the \fIDB\-DNSSEC\-FILE\fR, and resource records of all other types are stored in the \fIDB\-DNS\-FILE\fR\&. If the \fB\-D\fR flag is provided then CDS, CDNSKEY, and TA will also be stored in the \fIDB\-DNS\-FILE\fR file for transition compability\&.
 .sp
-\fBdnstable_convert\fR will create both the \fIDB\-DNS\-FILE\fR and \fIDB\-DNSSEC\-FILE\fR, and will abort if either exists\&. If the input file contains no DNS\-related records, \fIDB\-DNS\-FILE\fR will be removed\&. Conversely, if the input file contains no DNSSEC\-related records, \fIDB\-DNSSEC\-FILE\fR will be removed\&.
+\fBdnstable_convert\fR will create both the \fIDB\-DNS\-FILE\fR and \fIDB\-DNSSEC\-FILE\fR, and will abort if either exists\&. If the input file contains no DNS\-related records, \fIDB\-DNS\-FILE\fR will be removed\&. Conversely, if the input file contains no DNSSEC\-related records, \fIDB\-DNSSEC\-FILE\fR will be removed\&. If the \fB\-p\fR flag is provided then MTBL files without records are not removed\&.
 .sp
 The output files produced by \fBdnstable_convert\fR are suitable for use with other dnstable tools like \fBdnstable_dump\fR(1) and \fBdnstable_merge\fR(1), or with the \fBdnstable_reader\fR(3) API\&. Since they are in MTBL format, they can also be read with the \fBmtbl_reader\fR(3) API\&.
 .sp
@@ -66,4 +66,9 @@ Use numeric LEVEL of compression\&. Default varies based on TYPE\&.
 .RS 4
 This flag takes a positive integer value\&. Specifies the maximum amount of memory to use for in\-memory sorting, in megabytes\&. Defaults to 2048 megabytes (e\&.g\&. 2 gigabytes)\&. See the
 \fBmtbl_sorter\fR(3) API\&.
+.RE
+.PP
+\fB\-p\fR
+.RS 4
+Preserve empty DNS/DNSSEC MTBL files\&.
 .RE
