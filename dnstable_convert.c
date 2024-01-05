@@ -74,10 +74,10 @@ static const struct {
 #endif
 
 static const char		*nmsg_fname;
-static char 			*nmsg_source_fname;
+static const char		*nmsg_source_fname;
 static const char		*db_dns_fname;
 static const char		*db_dnssec_fname;
-static bool			store_nmsg_source = true; /* Store nmsg source filename */
+static bool			store_nmsg_source = false; /* Store nmsg source filename */
 static bool			migrate_dnssec;
 static bool			preserve_empty = false;	/* Keep empty dns files? */
 
@@ -967,7 +967,7 @@ main(int argc, char **argv)
 				fprintf(stderr, "Invalid compression type '%s'\n", optarg);
 				usage(name);
 				return (EXIT_FAILURE);
-			}
+		    	}
 			break;
 		case 'l':
 			compression_level = strtol(optarg, &end, 10);
@@ -989,11 +989,10 @@ main(int argc, char **argv)
 			preserve_empty = true;
 			break;
 		case 'S':
-			store_nmsg_source = false;
+			store_nmsg_source = true;
 			break;
 		case 's':
-			nmsg_source_fname = strdup(optarg);
-			assert(nmsg_source_fname != NULL);
+			nmsg_source_fname = optarg;
 			break;
 		case 'h':
 		case '?':
@@ -1020,8 +1019,7 @@ main(int argc, char **argv)
 			usage(name);
 			return (EXIT_FAILURE);
 		}
-		nmsg_source_fname = strdup(nmsg_fname);
-		assert(nmsg_source_fname != NULL);
+		nmsg_source_fname = nmsg_fname;
 	}
 
 	show_startup_details(stderr);
@@ -1046,9 +1044,6 @@ main(int argc, char **argv)
 		fprintf(stderr, "no DNSSEC entries generated, unlinking %s\n", db_dnssec_fname);
 		unlink(db_dnssec_fname);
 	}
-
-	if (nmsg_source_fname != NULL)
-		free(nmsg_source_fname);
 
 	return (EXIT_SUCCESS);
 }
