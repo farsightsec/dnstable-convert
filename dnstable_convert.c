@@ -74,8 +74,10 @@ static const struct {
 #endif
 
 static const char		*nmsg_fname;
+static char 			*nmsg_source_fname;
 static const char		*db_dns_fname;
 static const char		*db_dnssec_fname;
+static bool			store_nmsg_source = true; /* Store nmsg source filename */
 static bool			migrate_dnssec;
 static bool			preserve_empty = false;	/* Keep empty dns files? */
 
@@ -686,6 +688,25 @@ process_version(ubuf *key, ubuf *val)
 }
 
 static void
+process_source_file_name(ubuf *key, ubuf *val)
+{
+	mtbl_res res;
+
+	ubuf_clip(key, 0);
+	ubuf_add(key, ENTRY_TYPE_SOURCE);
+	ubuf_append(key, nmsg_source_fname, strlen(nmsg_source_fname));
+
+	ubuf_clip(val, 0);
+
+	res = mtbl_sorter_add(sorter_dns, ubuf_data(key), ubuf_size(key),
+			ubuf_data(val), ubuf_size(val));
+	assert(res == mtbl_res_success);
+	res = mtbl_sorter_add(sorter_dnssec, ubuf_data(key), ubuf_size(key),
+			ubuf_data(val), ubuf_size(val));
+	assert(res == mtbl_res_success);
+}
+
+static void
 do_read(void)
 {
 	Nmsg__Sie__DnsDedupe *dns;
@@ -747,6 +768,8 @@ do_read(void)
 
 	process_time_range(key, val);
 	process_version(key, val);
+	if (store_nmsg_source)
+		process_source_file_name(key, val);
 
 	ubuf_destroy(&key);
 	ubuf_destroy(&val);
@@ -913,6 +936,8 @@ usage(const char *name)
 	" -c TYPE:  Use TYPE compression (Default: zlib)\n"
 	" -l LEVEL: Use numeric LEVEL of compression.\n"
 	"           Default varies based on TYPE.\n"
+	" -s NAME:  NMSG file name to include in output if input is stdin.\n"
+	" -S:       Do not include nmsg file name in output.\n"
 	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n"
 	" -p:       Preserve empty DNS/DNSSEC files.\n");
 }
@@ -928,7 +953,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "Dc:l:m:p")) != -1) {
+	while ((c = getopt(argc, argv, "Dc:l:m:pSs:")) != -1) {
 		mtbl_res res;
 		char *end;
 
@@ -963,6 +988,13 @@ main(int argc, char **argv)
 		case 'p':
 			preserve_empty = true;
 			break;
+		case 'S':
+			store_nmsg_source = false;
+			break;
+		case 's':
+			nmsg_source_fname = strdup(optarg);
+			assert(nmsg_source_fname != NULL);
+			break;
 		case 'h':
 		case '?':
 		default:
@@ -981,6 +1013,16 @@ main(int argc, char **argv)
 	nmsg_fname = argv[0];
 	db_dns_fname = argv[1];
 	db_dnssec_fname = argv[2];
+
+	if (store_nmsg_source && nmsg_source_fname == NULL) {
+		if (strcmp(nmsg_fname, "-") == 0) {
+			fprintf(stderr, "Please provide nmsg source file name\n");
+			usage(name);
+			return (EXIT_FAILURE);
+		}
+		nmsg_source_fname = strdup(nmsg_fname);
+		assert(nmsg_source_fname != NULL);
+	}
 
 	show_startup_details(stderr);
 	check_fd_limit(stderr);
@@ -1004,6 +1046,9 @@ main(int argc, char **argv)
 		fprintf(stderr, "no DNSSEC entries generated, unlinking %s\n", db_dnssec_fname);
 		unlink(db_dnssec_fname);
 	}
+
+	if (nmsg_source_fname != NULL)
+		free(nmsg_source_fname);
 
 	return (EXIT_SUCCESS);
 }

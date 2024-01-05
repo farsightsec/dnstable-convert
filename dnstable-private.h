@@ -52,6 +52,7 @@
 #define ENTRY_TYPE_RRSET_NAME_FWD		((uint8_t)1)
 #define ENTRY_TYPE_RDATA			((uint8_t)2)
 #define ENTRY_TYPE_RDATA_NAME_REV		((uint8_t)3)
+#define ENTRY_TYPE_SOURCE			((uint8_t)253)
 #define ENTRY_TYPE_TIME_RANGE			((uint8_t)254)
 #define ENTRY_TYPE_VERSION			((uint8_t)255)
 
