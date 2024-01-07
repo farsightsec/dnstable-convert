@@ -74,7 +74,7 @@ static const struct {
 #endif
 
 static const char		*nmsg_fname;
-static const char		*nmsg_source_fname;
+static const char		*nmsg_source;
 static const char		*db_dns_fname;
 static const char		*db_dnssec_fname;
 static bool			store_nmsg_source = false; /* Store nmsg source filename */
@@ -688,14 +688,15 @@ process_version(ubuf *key, ubuf *val)
 }
 
 static void
-process_source_file_name(ubuf *key, ubuf *val)
+process_source(ubuf *key, ubuf *val)
 {
 	mtbl_res res;
 
 	ubuf_clip(key, 0);
 	ubuf_add(key, ENTRY_TYPE_SOURCE);
-	ubuf_append(key, nmsg_source_fname, strlen(nmsg_source_fname));
-
+	ubuf_append(key, nmsg_source, strlen(nmsg_source));
+	ubuf_cterm(key);
+	
 	ubuf_clip(val, 0);
 
 	res = mtbl_sorter_add(sorter_dns, ubuf_data(key), ubuf_size(key),
@@ -769,7 +770,7 @@ do_read(void)
 	process_time_range(key, val);
 	process_version(key, val);
 	if (store_nmsg_source)
-		process_source_file_name(key, val);
+		process_source(key, val);
 
 	ubuf_destroy(&key);
 	ubuf_destroy(&val);
@@ -937,7 +938,7 @@ usage(const char *name)
 	" -l LEVEL: Use numeric LEVEL of compression.\n"
 	"           Default varies based on TYPE.\n"
 	" -s NAME:  NMSG file name to include in output if input is stdin.\n"
-	" -S:       Do not include nmsg file name in output.\n"
+	" -S:       Include nmsg source in output.\n"
 	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n"
 	" -p:       Preserve empty DNS/DNSSEC files.\n");
 }
@@ -992,7 +993,7 @@ main(int argc, char **argv)
 			store_nmsg_source = true;
 			break;
 		case 's':
-			nmsg_source_fname = optarg;
+			nmsg_source = optarg;
 			break;
 		case 'h':
 		case '?':
@@ -1013,13 +1014,13 @@ main(int argc, char **argv)
 	db_dns_fname = argv[1];
 	db_dnssec_fname = argv[2];
 
-	if (store_nmsg_source && nmsg_source_fname == NULL) {
+	if (store_nmsg_source && nmsg_source == NULL) {
 		if (strcmp(nmsg_fname, "-") == 0) {
-			fprintf(stderr, "Please provide nmsg source file name\n");
+			fprintf(stderr, "Please provide NMSG source\n");
 			usage(name);
 			return (EXIT_FAILURE);
 		}
-		nmsg_source_fname = nmsg_fname;
+		nmsg_source = nmsg_fname;
 	}
 
 	show_startup_details(stderr);
