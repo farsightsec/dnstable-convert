@@ -178,7 +178,7 @@ setup_handlers(void)
 }
 
 /* Show details about startup environment. */
-static int
+static void
 show_startup_details(FILE *fp)
 {
 	char buffer[PATH_MAX];
