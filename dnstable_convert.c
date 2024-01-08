@@ -694,7 +694,7 @@ process_source_info(ubuf *key, ubuf *val)
 
 	ubuf_clip(key, 0);
 	ubuf_add(key, ENTRY_TYPE_SOURCE_INFO);
-	ubuf_append(key, nmsg_source_info, strlen(nmsg_source_info));
+	ubuf_append(key, (const uint8_t *)nmsg_source_info, strlen(nmsg_source_info));
 	ubuf_cterm(key);
 
 	ubuf_clip(val, 0);
