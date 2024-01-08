@@ -968,7 +968,7 @@ main(int argc, char **argv)
 				fprintf(stderr, "Invalid compression type '%s'\n", optarg);
 				usage(name);
 				return (EXIT_FAILURE);
-		    	}
+			}
 			break;
 		case 'l':
 			compression_level = strtol(optarg, &end, 10);
