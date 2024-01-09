@@ -74,8 +74,10 @@ static const struct {
 #endif
 
 static const char		*nmsg_fname;
+static const char		*nmsg_source_info;
 static const char		*db_dns_fname;
 static const char		*db_dnssec_fname;
+static bool			store_nmsg_source_info = false; /* Store nmsg source info */
 static bool			migrate_dnssec;
 static bool			preserve_empty = false;	/* Keep empty dns files? */
 
@@ -686,6 +688,26 @@ process_version(ubuf *key, ubuf *val)
 }
 
 static void
+process_source_info(ubuf *key, ubuf *val)
+{
+	mtbl_res res;
+
+	ubuf_clip(key, 0);
+	ubuf_add(key, ENTRY_TYPE_SOURCE_INFO);
+	ubuf_append(key, (const uint8_t *)nmsg_source_info, strlen(nmsg_source_info));
+	ubuf_cterm(key);
+
+	ubuf_clip(val, 0);
+
+	res = mtbl_sorter_add(sorter_dns, ubuf_data(key), ubuf_size(key),
+			ubuf_data(val), ubuf_size(val));
+	assert(res == mtbl_res_success);
+	res = mtbl_sorter_add(sorter_dnssec, ubuf_data(key), ubuf_size(key),
+			ubuf_data(val), ubuf_size(val));
+	assert(res == mtbl_res_success);
+}
+
+static void
 do_read(void)
 {
 	Nmsg__Sie__DnsDedupe *dns;
@@ -747,6 +769,8 @@ do_read(void)
 
 	process_time_range(key, val);
 	process_version(key, val);
+	if (store_nmsg_source_info)
+		process_source_info(key, val);
 
 	ubuf_destroy(&key);
 	ubuf_destroy(&val);
@@ -913,6 +937,8 @@ usage(const char *name)
 	" -c TYPE:  Use TYPE compression (Default: zlib)\n"
 	" -l LEVEL: Use numeric LEVEL of compression.\n"
 	"           Default varies based on TYPE.\n"
+	" -s NAME:  NMSG source information to include in output if input is stdin.\n"
+	" -S:       Include nmsg source information in output.\n"
 	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n"
 	" -p:       Preserve empty DNS/DNSSEC files.\n");
 }
@@ -928,7 +954,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "Dc:l:m:p")) != -1) {
+	while ((c = getopt(argc, argv, "Dc:l:m:pSs:")) != -1) {
 		mtbl_res res;
 		char *end;
 
@@ -963,6 +989,12 @@ main(int argc, char **argv)
 		case 'p':
 			preserve_empty = true;
 			break;
+		case 'S':
+			store_nmsg_source_info = true;
+			break;
+		case 's':
+			nmsg_source_info = optarg;
+			break;
 		case 'h':
 		case '?':
 		default:
@@ -981,6 +1013,15 @@ main(int argc, char **argv)
 	nmsg_fname = argv[0];
 	db_dns_fname = argv[1];
 	db_dnssec_fname = argv[2];
+
+	if (store_nmsg_source_info && nmsg_source_info == NULL) {
+		if (strcmp(nmsg_fname, "-") == 0) {
+			fprintf(stderr, "Please provide NMSG source information\n");
+			usage(name);
+			return (EXIT_FAILURE);
+		}
+		nmsg_source_info = nmsg_fname;
+	}
 
 	show_startup_details(stderr);
 	check_fd_limit(stderr);
