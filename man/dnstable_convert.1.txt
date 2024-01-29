@@ -6,7 +6,7 @@ dnstable_convert - convert passive DNS NMSG data to dnstable MTBL format
 
 == SYNOPSIS ==
 
-^dnstable_convert^ [^-Dp^] [^-c TYPE^] [^-l LEVEL^] [^-m #^] 'NMSG-FILE' 'DB-DNS-FILE' 'DB-DNSSEC-FILE'
+^dnstable_convert^ [^-DprS^] [^-c TYPE^] [^-l LEVEL^] [^-m #^] [^-s NAME^] 'NMSG-FILE' 'DB-DNS-FILE' 'DB-DNSSEC-FILE'
 
 == DESCRIPTION ==
 
@@ -62,3 +62,12 @@ be useful.
 
 ^-p^::
     Preserve empty DNS/DNSSEC MTBL files.
+
+^-r^::
+    Emit RDATA and RDATA_RNAME_REV for SOA RNAME.
+
+^-s NAME^::
+    NMSG source information to include in output if input is stdin.
+
+^-S^::
+    Include nmsg source information in output.
