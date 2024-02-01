@@ -82,7 +82,7 @@ static const char		*db_dnssec_fname;
 static bool			store_nmsg_source_info = false; /* Store nmsg source info */
 static bool			migrate_dnssec;
 static bool			preserve_empty = false;	/* Keep empty dns files? */
-static bool			s_process_soa_rdata = false;
+static bool			s_process_soa_rname = false;
 
 static nmsg_input_t		input;
 static struct mtbl_sorter	*sorter_dns;
@@ -492,7 +492,7 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 		offset = 6;	/* skip SRV priority, weight, port */
 		break;
 	case WDNS_TYPE_SOA:
-		if (!s_process_soa_rdata)
+		if (!s_process_soa_rname)
 			return;
 
 		/* Find length of MNAME */
@@ -672,7 +672,7 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 	rdata_name_rev_add(dns, key, val, rdata_start + offset, len, do_downcase);
 
 	/* For SOA RDATA, always process the MNAME, and then the RNAME if requested. */
-	if (dns->rrtype == WDNS_TYPE_SOA && s_process_soa_rdata) {
+	if (dns->rrtype == WDNS_TYPE_SOA && s_process_soa_rname) {
 		offset = len;		/* Offset of RNAME (== length of MNAME). */
 		res = wdns_len_uname(rdata_start + offset, rdata_end, &len);
 		if (res != wdns_res_success)
@@ -948,7 +948,7 @@ update_version_table(void)
 {
 	size_t i;
 
-	if (!s_process_soa_rdata)
+	if (!s_process_soa_rname)
 		return;
 
 	for (i = 0; i < sizeof(versions) / sizeof(versions[0]); i++) {
@@ -1069,7 +1069,7 @@ main(int argc, char **argv)
 			preserve_empty = true;
 			break;
 		case 'r':
-			s_process_soa_rdata = true;
+			s_process_soa_rname = true;
 			break;
 		case 'S':
 			store_nmsg_source_info = true;
