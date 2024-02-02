@@ -64,7 +64,7 @@ be useful.
     Preserve empty DNS/DNSSEC MTBL files.
 
 ^-r^::
-    Emit RDATA and RDATA_RNAME_REV for SOA RNAME.
+    Emit RDATA and RDATA_RNAME_REV dnstable entries for SOA rname field.
 
 ^-s NAME^::
     NMSG source information to include in output if input is stdin.

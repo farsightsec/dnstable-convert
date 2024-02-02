@@ -1017,7 +1017,7 @@ usage(const char *name)
 	"           Default varies based on TYPE.\n"
 	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n"
 	" -p:       Preserve empty DNS/DNSSEC files.\n"
-	" -r:       Emit SOA RNAME in RDATA and RDATA_NAME_REV\n"
+	" -r:       Emit RDATA and RDATA_NAME_REV dnstable entries for SOA rname field.\n"
 	" -s NAME:  NMSG source information to include in output if input is stdin.\n"
 	" -S:       Include nmsg source information in output.\n");
 }
