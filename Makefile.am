@@ -17,8 +17,7 @@ dnstable_convert_SOURCES = dnstable_convert.c \
 	libmy/my_byteorder.h \
 	dnstable-private.h
 
-dnstable_convert_CFLAGS = $(libnmsg_CFLAGS) $(libdnstable_CFLAGS) \
-			  $(libmtbl_CFLAGS) $(libwdns_CFLAGS)
+dnstable_convert_CFLAGS = $(AM_CFLAGS)
 
 dnstable_convert_LDADD = \
 	$(libdnstable_LIBS) \
@@ -30,8 +29,7 @@ bin_PROGRAMS += dnstable_unconvert
 
 dnstable_unconvert_SOURCES = dnstable_unconvert.c
 
-dnstable_unconvert_CFLAGS = $(libnmsg_CFLAGS) $(libdnstable_CFLAGS) \
-			  $(libmtbl_CFLAGS) $(libwdns_CFLAGS)
+dnstable_unconvert_CFLAGS = $(AM_CFLAGS)
 
 dnstable_unconvert_LDADD = \
 	$(libdnstable_LIBS) \

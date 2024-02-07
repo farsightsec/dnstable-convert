@@ -45,7 +45,7 @@
 
 #define DEFAULT_COMPRESSION_LEVEL (-1000)
 
-static const struct {
+static struct {
 	uint8_t entry_type;
 	uint32_t version;
 } versions[] = {
@@ -55,9 +55,11 @@ static const struct {
 	{ ENTRY_TYPE_RRSET_NAME_FWD, 1 },
 
 	/* ENTRY_TYPE_RDATA version 1: fix the SRV slicing and add SVCB/HTTPS sliced entries */
+	/* ENTRY_TYPE_RDATA version 2: Add SOA RNAME sliced entry */
 	{ ENTRY_TYPE_RDATA, 1 },
 
 	/* ENTRY_TYPE_RDATA_NAME_REV version 1: add SOA, SVCB, and HTTPS name indexing; add rrtype union as value */
+	/* ENTRY_TYPE_RDATA_NAME_REV version 2: add SOA RNAME indexing */
 	{ ENTRY_TYPE_RDATA_NAME_REV, 1 },
 };
 
@@ -81,6 +83,7 @@ static const char		*db_dnssec_fname;
 static bool			store_nmsg_source_info = false; /* Store nmsg source info */
 static bool			migrate_dnssec;
 static bool			preserve_empty = false;	/* Keep empty dns files? */
+static bool			s_process_soa_rname = false;
 
 static nmsg_input_t		input;
 static struct mtbl_sorter	*sorter_dns;
@@ -181,7 +184,7 @@ setup_handlers(void)
 }
 
 /* Show details about startup environment. */
-static int
+static void
 show_startup_details(FILE *fp)
 {
 	char buffer[PATH_MAX];
@@ -361,8 +364,6 @@ put_rrtype(Nmsg__Sie__DnsDedupe *dns, ubuf *val)
 	}
 }
 
-
-
 static void
 process_rrset(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val)
 {
@@ -471,10 +472,16 @@ process_rdata(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 static void
 process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 {
+	const size_t rdata_len = dns->rdata[i].len;
+	const uint8_t * const rdata_start = dns->rdata[i].data;
+	const uint8_t * const rdata_end = rdata_start + rdata_len;
 	uint8_t name[WDNS_MAXLEN_NAME];
 	wdns_name_t downcase;
 	size_t offset = 0, len;
 	wdns_res res;
+
+	if (rdata_len == 0)
+		return;
 
 	switch (dns->rrtype) {
 	case WDNS_TYPE_MX:
@@ -485,16 +492,40 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 	case WDNS_TYPE_SRV:
 		offset = 6;	/* skip SRV priority, weight, port */
 		break;
+	case WDNS_TYPE_SOA:
+		if (!s_process_soa_rname)
+			return;
+
+		/* Find length of MNAME */
+		res = wdns_len_uname(rdata_start, rdata_end, &len);
+		if (res != wdns_res_success)
+			return;
+
+		if (len > rdata_len)
+			return;
+
+		offset = len;	/* skip MNAME */
+		break;
 	default:
 		return;
 	}
 
-	if (dns->rdata[i].len == 0 || dns->rdata[i].len <= offset)
+	if (rdata_len <= offset)
 		return;
 
 	/* clear key, val */
 	ubuf_clip(key, 0);
 	ubuf_clip(val, 0);
+
+	/*
+	 * Key ::= TYPE DATA RRTYPE NAME SLICE DATALEN
+	 *     TYPE: 1 octet, Type-Byte
+	 *     DATA: Arbitrary length
+	 *   RRTYPE: Varint
+	 *     NAME: Arbitrary length (label-reversed)
+	 *    SLICE: Data from front of DATA, arbitrary length
+	 *  DATALEN: 2 octets, le16, length of DATA
+	 */
 
 	/* key: type byte */
 	ubuf_add(key, ENTRY_TYPE_RDATA);
@@ -503,13 +534,12 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 	case WDNS_TYPE_MX:
 	case WDNS_TYPE_SRV:
 		/* key: data */
-		ubuf_append(key, dns->rdata[i].data + offset, dns->rdata[i].len - offset);
+		ubuf_append(key, rdata_start + offset, rdata_len - offset);
 		break;
 	case WDNS_TYPE_SVCB:
 	case WDNS_TYPE_HTTPS:
-		res = wdns_len_uname(dns->rdata[i].data + offset,
-				     dns->rdata[i].data + dns->rdata[i].len,
-				     &len);
+	case WDNS_TYPE_SOA:
+		res = wdns_len_uname(rdata_start + offset, rdata_end, &len);
 		if (res != wdns_res_success)
 			return;
 
@@ -519,20 +549,25 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 		 * a nonzero length label. Treat this case as a malformed
 		 * name.
 		 */
-		if (offset + len > dns->rdata[i].len)
+		if (offset + len > rdata_len)
 			return;
+
+		if (dns->rrtype == WDNS_TYPE_SOA) {
+			/* Do not process if MNAME and RNAME are the same. */
+			if (offset == len && memcmp(rdata_start, rdata_start + offset, len) == 0)
+				return;
+		}
 
 		/* key: downcased target name */
 		ubuf_reserve(key, len);
 		downcase.data = ubuf_ptr(key);
 		downcase.len = len;
-		memcpy(ubuf_ptr(key), dns->rdata[i].data + offset, len);
+		memcpy(ubuf_ptr(key), rdata_start + offset, len);
 		wdns_downcase_name(&downcase);
 		ubuf_advance(key, len);
 
 		/* key: rest of rdata */
-		ubuf_append(key, dns->rdata[i].data + offset + len,
-				 dns->rdata[i].len - (offset + len));
+		ubuf_append(key, rdata_start + (offset + len), rdata_len - (offset + len));
 		break;
 	}
 
@@ -546,10 +581,10 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 	ubuf_append(key, name, dns->rrname.len);
 
 	/* key: rdata slice */
-	ubuf_append(key, dns->rdata[i].data, offset);
+	ubuf_append(key, rdata_start, offset);
 
 	/* key: data length */
-	uint16_t dlen = htole16((uint16_t) dns->rdata[i].len - offset);
+	uint16_t dlen = htole16((uint16_t) rdata_len - offset);
 	ubuf_reserve(key, ubuf_size(key) + sizeof(uint16_t));
 	ubuf_append(key, (uint8_t *) &dlen, sizeof(uint16_t));
 
@@ -560,21 +595,47 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 }
 
 static void
-process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
+rdata_name_rev_add(Nmsg__Sie__DnsDedupe *dns, ubuf *key, ubuf *val, const uint8_t *data, size_t len, bool do_downcase)
 {
-	size_t offset = 0, len = dns->rdata[i].len;
 	uint8_t name[WDNS_MAXLEN_NAME];
 	wdns_name_t downcase;
+	wdns_res res;
+
+	/* clear key */
+	ubuf_clip(key, 0);
+
+	/* key: type byte */
+	ubuf_add(key, ENTRY_TYPE_RDATA_NAME_REV);
+
+	/* key: rdata name (label-reversed) */
+	res = wdns_reverse_name(data, len, name);
+	assert(res == wdns_res_success);
+	if (do_downcase) {
+		downcase.data = name;
+		downcase.len = len;
+		wdns_downcase_name(&downcase);
+	}
+	ubuf_append(key, name, len);
+
+	add_entry(dns, key, val);
+}
+
+static void
+process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
+{
+	const size_t rdata_len = dns->rdata[i].len;
+	const uint8_t * const rdata_start = dns->rdata[i].data;
+	const uint8_t * const rdata_end = rdata_start + rdata_len;
+	size_t offset = 0, len = rdata_len;
 	bool do_downcase = false;
 	wdns_res res;
 
+	if (rdata_len == 0)
+		return;
+
 	switch (dns->rrtype) {
 	case WDNS_TYPE_SOA:
-		if (len == 0)
-			return;
-		res = wdns_len_uname(dns->rdata[i].data,
-				     dns->rdata[i].data + len,
-				     &len);
+		res = wdns_len_uname(rdata_start, rdata_end, &len);
 		if (res != wdns_res_success)
 			return;
 		/* fallthrough */
@@ -588,9 +649,7 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 	case WDNS_TYPE_HTTPS:
 		offset = 2;
 		do_downcase = true;
-		res = wdns_len_uname(dns->rdata[i].data + offset,
-				     dns->rdata[i].data + len,
-				     &len);
+		res = wdns_len_uname(rdata_start + offset, rdata_end, &len);
 		if (res != wdns_res_success)
 			return;
 		break;
@@ -606,34 +665,31 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 		return;		/* Other rrtypes are not indexed by name. */
 	}
 
-	if (dns->rdata[i].len == 0 || dns->rdata[i].len <= offset)
+	if (rdata_len <= offset)
 		return;
 
 	/* check for a len that is longer than the data left in the packet */
-	if (offset + len > dns->rdata[i].len)
+	if (offset + len > rdata_len)
 		return;
 
-	/* clear key, val */
-	ubuf_clip(key, 0);
-	ubuf_clip(val, 0);
-
-	/* key: type byte */
-	ubuf_add(key, ENTRY_TYPE_RDATA_NAME_REV);
-
-	/* key: rdata name (label-reversed) */
-	res = wdns_reverse_name(dns->rdata[i].data + offset, len, name);
-	assert(res == wdns_res_success);
-	if (do_downcase) {
-		downcase.data = name;
-		downcase.len = len;
-		wdns_downcase_name(&downcase);
-	}
-	ubuf_append(key, name, len);
-
 	/* value: the RRtype */
+	ubuf_clip(val, 0);
 	put_rrtype(dns, val);
 
-	add_entry(dns, key, val);
+	rdata_name_rev_add(dns, key, val, rdata_start + offset, len, do_downcase);
+
+	/* For SOA RDATA, always process the MNAME, and then the RNAME if requested. */
+	if (dns->rrtype == WDNS_TYPE_SOA && s_process_soa_rname) {
+		offset = len;		/* Offset of RNAME (== length of MNAME). */
+		res = wdns_len_uname(rdata_start + offset, rdata_end, &len);
+		if (res != wdns_res_success)
+			return;
+
+		if (offset + len > rdata_len)
+			return;
+
+		rdata_name_rev_add(dns, key, val, rdata_start + offset, len, true);
+	}
 }
 
 static void
@@ -722,6 +778,8 @@ do_read(void)
 	fprintf(stderr, "dnstable_convert: reading input data\n");
 
 	for (;;) {
+		int32_t vid, msgtype;
+
 		res = nmsg_input_read(input, &msg);
 		if (res == nmsg_res_eof)
 			break;
@@ -730,8 +788,8 @@ do_read(void)
 			exit(EXIT_FAILURE);
 		}
 
-		int32_t vid = nmsg_message_get_vid(msg);
-		int32_t msgtype = nmsg_message_get_msgtype(msg);
+		vid = nmsg_message_get_vid(msg);
+		msgtype = nmsg_message_get_msgtype(msg);
 		if ((vid != NMSG_VENDOR_SIE_ID) || (msgtype != NMSG_VENDOR_SIE_DNSDEDUPE_ID)) {
 			if ((nmsg_msgmod_vid_to_vname(vid) != NULL) &&
 			    (nmsg_msgmod_msgtype_to_mname(vid, msgtype) != NULL))
@@ -805,10 +863,10 @@ write_thread(void *clos)
 {
 	struct write_thread_ctx *ctx = (struct write_thread_ctx *) clos;
 	struct mtbl_iter *it = mtbl_sorter_iter(ctx->s);
-	assert(it != NULL);
-
 	const uint8_t *key, *val;
 	size_t len_key, len_val;
+
+	assert(it != NULL);
 
 	ctx->count = 0;
 	nmsg_timespec_get(&ctx->start);
@@ -887,6 +945,28 @@ init_nmsg(void)
 	}
 }
 
+/* Update version of ENTRY_TYPE_RDATA_NAME_REV, if feature requested. */
+static void
+update_version_table(void)
+{
+	size_t i;
+
+	if (!s_process_soa_rname)
+		return;
+
+	for (i = 0; i < sizeof(versions) / sizeof(versions[0]); i++) {
+		switch (versions[i].entry_type) {
+		case ENTRY_TYPE_RDATA_NAME_REV:
+		case ENTRY_TYPE_RDATA:
+			if (versions[i].version < 2)
+				versions[i].version = 2;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 static void
 init_mtbl(mtbl_compression_type compression, int level, size_t mem_mb)
 {
@@ -932,22 +1012,23 @@ init_mtbl(mtbl_compression_type compression, int level, size_t mem_mb)
 static void
 usage(const char *name)
 {
-	fprintf(stderr, "Usage: %s [-D] [-c compression] [-l level] [-m megabytes] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
+	fprintf(stderr, "Usage: %s [-D] [-p] [-r] [-S] [-c compression] [-l level] [-m megabytes] [-s NAME] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
 	fprintf(stderr, "Options:\n"
-	" -D:       Put CDS, CDNSKEY, and TA RRSets in both outputs\n"
 	" -c TYPE:  Use TYPE compression (Default: zlib)\n"
+	" -D:       Put CDS, CDNSKEY, and TA RRSets in both outputs\n"
 	" -l LEVEL: Use numeric LEVEL of compression.\n"
 	"           Default varies based on TYPE.\n"
-	" -s NAME:  NMSG source information to include in output if input is stdin.\n"
-	" -S:       Include nmsg source information in output.\n"
 	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n"
-	" -p:       Preserve empty DNS/DNSSEC files.\n");
+	" -p:       Preserve empty DNS/DNSSEC files.\n"
+	" -r:       Emit RDATA and RDATA_NAME_REV dnstable entries for SOA rname field.\n"
+	" -s NAME:  NMSG source information to include in output if input is stdin.\n"
+	" -S:       Include nmsg source information in output.\n");
 }
 
 int
 main(int argc, char **argv)
 {
-	int mmb = 0;
+	long mmb = 0;
 	mtbl_compression_type compression = MTBL_COMPRESSION_ZLIB;
 	int compression_level = DEFAULT_COMPRESSION_LEVEL;
 	const char *name = argv[0];
@@ -955,7 +1036,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "Dc:l:m:pSs:")) != -1) {
+	while ((c = getopt(argc, argv, "Dc:l:m:prSs:")) != -1) {
 		mtbl_res res;
 		char *end;
 
@@ -990,6 +1071,9 @@ main(int argc, char **argv)
 		case 'p':
 			preserve_empty = true;
 			break;
+		case 'r':
+			s_process_soa_rname = true;
+			break;
 		case 'S':
 			store_nmsg_source_info = true;
 			break;
@@ -1023,6 +1107,8 @@ main(int argc, char **argv)
 		}
 		nmsg_source_info = nmsg_fname;
 	}
+
+	update_version_table();
 
 	show_startup_details(stderr);
 	check_fd_limit(stderr);
