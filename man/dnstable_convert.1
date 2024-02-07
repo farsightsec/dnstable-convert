@@ -2,12 +2,12 @@
 .\"     Title: dnstable_convert
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 06/06/2023
+.\"      Date: 01/26/2024
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DNSTABLE_CONVERT" "1" "06/06/2023" "\ \&" "\ \&"
+.TH "DNSTABLE_CONVERT" "1" "01/26/2024" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 dnstable_convert \- convert passive DNS NMSG data to dnstable MTBL format
 .SH "SYNOPSIS"
 .sp
-\fBdnstable_convert\fR [\fB\-Dp\fR] [\fB\-c TYPE\fR] [\fB\-l LEVEL\fR] [\fB\-m #\fR] \fINMSG\-FILE\fR \fIDB\-DNS\-FILE\fR \fIDB\-DNSSEC\-FILE\fR
+\fBdnstable_convert\fR [\fB\-DprS\fR] [\fB\-c TYPE\fR] [\fB\-l LEVEL\fR] [\fB\-m #\fR] [\fB\-s NAME\fR] \fINMSG\-FILE\fR \fIDB\-DNS\-FILE\fR \fIDB\-DNSSEC\-FILE\fR
 .SH "DESCRIPTION"
 .sp
 Converts passive DNS data from NMSG format to MTBL format\&. The input NMSG data in \fINMSG\-FILE\fR must be encoded using the SIE/dnsdedupe message schema, and the output data will be written to two separate MTBL files: the \fIDB\-DNS\-FILE\fR containing "plain" DNS records, and the \fIDB\-DNSSEC\-FILE\fR, containing DNSSEC\-related records\&.
@@ -71,4 +71,19 @@ This flag takes a positive integer value\&. Specifies the maximum amount of memo
 \fB\-p\fR
 .RS 4
 Preserve empty DNS/DNSSEC MTBL files\&.
+.RE
+.PP
+\fB\-r\fR
+.RS 4
+Emit RDATA and RDATA_RNAME_REV dnstable entries for SOA rname field\&.
+.RE
+.PP
+\fB\-s NAME\fR
+.RS 4
+Source metadata to include in output\&. Required if input is stdin, otherwise defaults to input file name\&.
+.RE
+.PP
+\fB\-S\fR
+.RS 4
+Include nmsg source information in output\&.
 .RE

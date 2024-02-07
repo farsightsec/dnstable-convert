@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 	struct mtbl_reader *r;
 	struct mtbl_iter *it;
 	const uint8_t *key, *val;
-	size_t i, len_key, len_val;
+	size_t len_key, len_val;
 
 	while ((c = getopt(argc, argv, "z")) != -1) {
 		switch(c) {
@@ -160,8 +160,8 @@ int main(int argc, char **argv) {
 static struct dnstable_entry *cmp_entry;
 
 static int rdata_cmp(const void *a, const void *b) {
-	size_t ia = *(size_t *)a;
-	size_t ib = *(size_t *)b;
+	size_t ia = *(const size_t *)a;
+	size_t ib = *(const size_t *)b;
 	size_t len_a, len_b;
 	const uint8_t *rdata_a, *rdata_b;
 	dnstable_res dres;
@@ -251,7 +251,7 @@ static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *dat
 	len_data -= vi_len;						\
 	data += mtbl_varint_decode64(data, &vi_val);			\
 	v = (uint32_t)vi_val;						\
-} while(0);
+} while(0)
 
 	decode(nm_time_first);
 	decode(nm_time_last);
