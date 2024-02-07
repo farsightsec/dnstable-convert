@@ -551,6 +551,12 @@ process_rdata_slice(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val)
 		if (offset + len > rdata_len)
 			return;
 
+		if (dns->rrtype == WDNS_TYPE_SOA) {
+			/* Do not process if MNAME and RNAME are the same. */
+			if (offset == len && memcmp(rdata_start, rdata_start + offset, len) == 0)
+				return;
+		}
+
 		/* key: downcased target name */
 		ubuf_reserve(key, len);
 		downcase.data = ubuf_ptr(key);
@@ -679,10 +685,6 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 			return;
 
 		if (offset + len > rdata_len)
-			return;
-
-		/* Do not duplicate if MNAME and RNAME are the same. */
-		if (offset == len && memcmp(rdata_start, rdata_start + offset, len) == 0)
 			return;
 
 		rdata_name_rev_add(dns, key, val, rdata_start + offset, len, true);
