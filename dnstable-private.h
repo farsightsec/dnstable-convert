@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2024 DomainTools LLC
  * Copyright (c) 2012, 2014, 2018, 2021 by Farsight Security, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,6 +53,7 @@
 #define ENTRY_TYPE_RRSET_NAME_FWD		((uint8_t)1)
 #define ENTRY_TYPE_RDATA			((uint8_t)2)
 #define ENTRY_TYPE_RDATA_NAME_REV		((uint8_t)3)
+#define ENTRY_TYPE_SOURCE_INFO			((uint8_t)253)
 #define ENTRY_TYPE_TIME_RANGE			((uint8_t)254)
 #define ENTRY_TYPE_VERSION			((uint8_t)255)
 
