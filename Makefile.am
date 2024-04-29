@@ -7,6 +7,7 @@ AM_CPPFLAGS = -include $(top_builddir)/config.h
 AM_CFLAGS = ${my_CFLAGS} \
 	$(libdnstable_CFLAGS) \
 	$(libmtbl_CFLAGS) \
+	$(libnmsg_CFLAGS) \
 	$(libwdns_CFLAGS)
 
 bin_PROGRAMS = dnstable_convert
