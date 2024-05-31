@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 Name:           dnstable-convert
-Version:        0.12.0
+Version:        0.13.0
 Release:        1%{?dist}
 Summary:        A utility for converting dnstable files to different formats
 

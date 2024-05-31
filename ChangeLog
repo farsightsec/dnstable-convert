@@ -1,3 +1,11 @@
+dnstable-convert (0.13.0)
+
+  * Add optional generation of source information metadata.
+
+  * Add optional indexing of SOA rdata by rname.
+
+ -- Farsight Security Inc <software@farsightsecurity.com>  Mon, 12 Feb 2024 16:12:41 -0500
+
 dnstable-convert (0.12.0)
 
   * dnstable_convert: add -p option to not remove generated mtbl
