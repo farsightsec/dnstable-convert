@@ -634,6 +634,7 @@ process_rdata_name_rev(Nmsg__Sie__DnsDedupe *dns, size_t i, ubuf *key, ubuf *val
 		return;
 
 	switch (dns->rrtype) {
+	case WDNS_TYPE_NSEC:
 	case WDNS_TYPE_SOA:
 		res = wdns_len_uname(rdata_start, rdata_end, &len);
 		if (res != wdns_res_success)
