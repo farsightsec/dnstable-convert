@@ -20,6 +20,7 @@
 #include <inttypes.h>
 #include <locale.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -100,7 +101,8 @@ static struct timespec		start_time;
 static uint64_t			count_messages;
 static uint64_t			count_entries_dns;
 static uint64_t			count_entries_dnssec;
-static uint64_t			count_entries_merged;
+/* Count merged entries correctly even when MTBL multithreading is enabled. */
+static atomic_uint_fast64_t	count_entries_merged;
 
 #define STATS_INTERVAL				1000000
 
@@ -968,12 +970,14 @@ update_version_table(void)
 }
 
 static void
-init_mtbl(mtbl_compression_type compression, int level, size_t block_size, size_t mem_mb)
+init_mtbl(mtbl_compression_type compression, int level, size_t block_size, struct mtbl_threadpool *pool, size_t mem_mb)
 {
 	struct mtbl_sorter_options *sopt;
 	struct mtbl_writer_options *wopt;
 
 	sopt = mtbl_sorter_options_init();
+
+	mtbl_sorter_options_set_threadpool(sopt, pool);
 
 	if (mem_mb == 0)
 		mem_mb = 2UL * 1024;
@@ -985,6 +989,7 @@ init_mtbl(mtbl_compression_type compression, int level, size_t block_size, size_
 
 	wopt = mtbl_writer_options_init();
 
+	mtbl_writer_options_set_threadpool(wopt, pool);
 	mtbl_writer_options_set_block_size(wopt, block_size);
 
 	mtbl_writer_options_set_compression(wopt, compression);
@@ -1017,13 +1022,14 @@ init_mtbl(mtbl_compression_type compression, int level, size_t block_size, size_
 static void
 usage(const char *name)
 {
-	fprintf(stderr, "Usage: %s [-D] [-p] [-r] [-S] [-c compression] [-l level] [-b size] [-m megabytes] [-s NAME] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
+	fprintf(stderr, "Usage: %s [-D] [-p] [-r] [-S] [-c compression] [-l level] [-b size] [-t threads] [-m megabytes] [-s NAME] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
 	fprintf(stderr, "Options:\n"
 	" -c TYPE:  Use TYPE compression (Default: zlib)\n"
 	" -D:       Put CDS, CDNSKEY, and TA RRSets in both outputs\n"
 	" -l LEVEL: Use numeric LEVEL of compression.\n"
 	"           Default varies based on TYPE.\n"
 	" -b SIZE:  The uncompressed data block size hint for the output file..\n"
+	" -t COUNT: Use a maximum of COUNT threads during sorting and writing.\n"
 	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n"
 	" -p:       Preserve empty DNS/DNSSEC files.\n"
 	" -r:       Emit RDATA and RDATA_NAME_REV dnstable entries for SOA rname field.\n"
@@ -1038,12 +1044,14 @@ main(int argc, char **argv)
 	mtbl_compression_type compression = MTBL_COMPRESSION_ZLIB;
 	int compression_level = DEFAULT_COMPRESSION_LEVEL;
 	int block_size = 0;
+	int thread_count = 0;
+	struct mtbl_threadpool *pool = NULL;
 	const char *name = argv[0];
 	int c;
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "Dc:l:b:m:prSs:")) != -1) {
+	while ((c = getopt(argc, argv, "Dc:l:t:b:m:prSs:")) != -1) {
 		mtbl_res res;
 		char *end;
 
@@ -1071,6 +1079,14 @@ main(int argc, char **argv)
 			block_size = atoi(optarg);
 			if (block_size < 1) {
 				fprintf(stderr, "Invalid block size '%s'\n", optarg);
+				usage(name);
+				return (EXIT_FAILURE);
+			}
+			break;
+		case 't':
+			thread_count = atoi(optarg);
+			if (thread_count < 0) {
+				fprintf(stderr, "Invalid thread count '%s'\n", optarg);
 				usage(name);
 				return (EXIT_FAILURE);
 			}
@@ -1131,7 +1147,10 @@ main(int argc, char **argv)
 	setup_handlers();
 
 	init_nmsg();
-	init_mtbl(compression, compression_level, block_size, (size_t)mmb);
+
+	pool = mtbl_threadpool_init(thread_count);
+	init_mtbl(compression, compression_level, block_size, pool, (size_t)mmb);
+
 	nmsg_timespec_get(&start_time);
 	do_read();
 	nmsg_input_close(&input);
@@ -1147,6 +1166,8 @@ main(int argc, char **argv)
 		fprintf(stderr, "no DNSSEC entries generated, unlinking %s\n", db_dnssec_fname);
 		unlink(db_dnssec_fname);
 	}
+
+	mtbl_threadpool_destroy(&pool);
 
 	return (EXIT_SUCCESS);
 }
