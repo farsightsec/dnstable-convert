@@ -968,7 +968,7 @@ update_version_table(void)
 }
 
 static void
-init_mtbl(mtbl_compression_type compression, int level, size_t mem_mb)
+init_mtbl(mtbl_compression_type compression, int level, size_t block_size, size_t mem_mb)
 {
 	struct mtbl_sorter_options *sopt;
 	struct mtbl_writer_options *wopt;
@@ -984,18 +984,23 @@ init_mtbl(mtbl_compression_type compression, int level, size_t mem_mb)
 		mtbl_sorter_options_set_temp_dir(sopt, getenv("VARTMPDIR"));
 
 	wopt = mtbl_writer_options_init();
+
+	mtbl_writer_options_set_block_size(wopt, block_size);
+
 	mtbl_writer_options_set_compression(wopt, compression);
 	if (level != DEFAULT_COMPRESSION_LEVEL)
 		mtbl_writer_options_set_compression_level(wopt, level);
 
-	mtbl_writer_options_set_block_size(wopt, DNS_MTBL_BLOCK_SIZE);
+	if (block_size == 0)
+		mtbl_writer_options_set_block_size(wopt, DNS_MTBL_BLOCK_SIZE);
 	writer_dns = mtbl_writer_init(db_dns_fname, wopt);
 	if (writer_dns == NULL) {
 		perror(db_dns_fname);
 		exit(EXIT_FAILURE);
 	}
 
-	mtbl_writer_options_set_block_size(wopt, DNSSEC_MTBL_BLOCK_SIZE);
+	if (block_size == 0)
+		mtbl_writer_options_set_block_size(wopt, DNSSEC_MTBL_BLOCK_SIZE);
 	writer_dnssec = mtbl_writer_init(db_dnssec_fname, wopt);
 	if (writer_dnssec == NULL) {
 		perror(db_dnssec_fname);
@@ -1012,12 +1017,13 @@ init_mtbl(mtbl_compression_type compression, int level, size_t mem_mb)
 static void
 usage(const char *name)
 {
-	fprintf(stderr, "Usage: %s [-D] [-p] [-r] [-S] [-c compression] [-l level] [-m megabytes] [-s NAME] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
+	fprintf(stderr, "Usage: %s [-D] [-p] [-r] [-S] [-c compression] [-l level] [-b size] [-m megabytes] [-s NAME] <NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
 	fprintf(stderr, "Options:\n"
 	" -c TYPE:  Use TYPE compression (Default: zlib)\n"
 	" -D:       Put CDS, CDNSKEY, and TA RRSets in both outputs\n"
 	" -l LEVEL: Use numeric LEVEL of compression.\n"
 	"           Default varies based on TYPE.\n"
+	" -b SIZE:  The uncompressed data block size hint for the output file..\n"
 	" -m MMB:   Specify maximum amount of memory to use for in-memory sorting, in megabytes.\n"
 	" -p:       Preserve empty DNS/DNSSEC files.\n"
 	" -r:       Emit RDATA and RDATA_NAME_REV dnstable entries for SOA rname field.\n"
@@ -1031,12 +1037,13 @@ main(int argc, char **argv)
 	long mmb = 0;
 	mtbl_compression_type compression = MTBL_COMPRESSION_ZLIB;
 	int compression_level = DEFAULT_COMPRESSION_LEVEL;
+	int block_size = 0;
 	const char *name = argv[0];
 	int c;
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "Dc:l:m:prSs:")) != -1) {
+	while ((c = getopt(argc, argv, "Dc:l:b:m:prSs:")) != -1) {
 		mtbl_res res;
 		char *end;
 
@@ -1056,6 +1063,14 @@ main(int argc, char **argv)
 			compression_level = strtol(optarg, &end, 10);
 			if (*end != '\0') {
 				fprintf(stderr, "Invalid compression level '%s'\n", optarg);
+				usage(name);
+				return (EXIT_FAILURE);
+			}
+			break;
+		case 'b':
+			block_size = atoi(optarg);
+			if (block_size < 1) {
+				fprintf(stderr, "Invalid block size '%s'\n", optarg);
 				usage(name);
 				return (EXIT_FAILURE);
 			}
@@ -1116,7 +1131,7 @@ main(int argc, char **argv)
 	setup_handlers();
 
 	init_nmsg();
-	init_mtbl(compression, compression_level, (size_t)mmb);
+	init_mtbl(compression, compression_level, block_size, (size_t)mmb);
 	nmsg_timespec_get(&start_time);
 	do_read();
 	nmsg_input_close(&input);
