@@ -25,7 +25,7 @@ AC_CHECK_HEADERS([sys/endian.h endian.h])
 
 PKG_CHECK_MODULES([libdnstable], [libdnstable])
 PKG_CHECK_MODULES([libnmsg], [libnmsg])
-PKG_CHECK_MODULES([libmtbl], [libmtbl])
+PKG_CHECK_MODULES([libmtbl], [libmtbl >= 1.7.0])
 PKG_CHECK_MODULES([libwdns], [libwdns])
 
 CPPFLAGS_SAVED=$CPPFLAGS
