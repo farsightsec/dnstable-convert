@@ -970,7 +970,8 @@ update_version_table(void)
 }
 
 static void
-init_mtbl(mtbl_compression_type compression, int level, size_t dns_block_size, struct mtbl_threadpool *pool, size_t mem_mb)
+init_mtbl(mtbl_compression_type compression, int level, size_t dns_block_size,
+	  size_t dnssec_block_size, struct mtbl_threadpool *pool, size_t mem_mb)
 {
 	struct mtbl_sorter_options *sopt;
 	struct mtbl_writer_options *wopt;
@@ -1002,7 +1003,7 @@ init_mtbl(mtbl_compression_type compression, int level, size_t dns_block_size, s
 		exit(EXIT_FAILURE);
 	}
 
-	mtbl_writer_options_set_block_size(wopt, DNSSEC_MTBL_BLOCK_SIZE);
+	mtbl_writer_options_set_block_size(wopt, dnssec_block_size);
 	writer_dnssec = mtbl_writer_init(db_dnssec_fname, wopt);
 	if (writer_dnssec == NULL) {
 		perror(db_dnssec_fname);
@@ -1019,23 +1020,23 @@ init_mtbl(mtbl_compression_type compression, int level, size_t dns_block_size, s
 static void
 usage(const char *name)
 {
-	fprintf(stderr, "Usage: %s [-D] [-p] [-r] [-S] [-b size] [-c compression] "
-			"[-l level] [-m megabytes] [-s NAME] [-t threads] "
+	fprintf(stderr, "Usage: %s [-D] [-p] [-r] [-S] [-b dns_bsize[,dnssec_bsize]] "
+			"[-c compression] [-l level] [-m megabytes] [-s name] [-t threads] "
 			"<NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
 
 	fprintf(stderr, "Options:\n"
-		" -b SIZE:  set mtbl block size to use for DB FILE (default: %u).\n"
-		" -c TYPE:  use type compression (default: zlib)\n"
-		" -D:       put cds, cdnskey, and ta rrsets in both outputs\n"
-		" -l LEVEL: use numeric level of compression.\n"
-		"           default varies based on type.\n"
-		" -m MMB:   specify maximum amount of memory to use for in-memory sorting, in megabytes.\n"
-		" -p:       preserve empty dns/dnssec files.\n"
-		" -r:       emit rdata and rdata_name_rev dnstable entries for soa rname field.\n"
-		" -s NAME:  nmsg source information to include in output if input is stdin.\n"
-		" -s:       include nmsg source information in output.\n"
-		" -t COUNT: set size of mtbl thread pool for sorting and writing.\n",
-		DNS_MTBL_BLOCK_SIZE);
+		" -b DNS[,DNSSEC]: set block size for dns and dnssec files (defaults: %u, %u).\n"
+		" -c TYPE:         use type compression (default: zlib)\n"
+		" -D:              put cds, cdnskey, and ta rrsets in both outputs\n"
+		" -l LEVEL:        use numeric level of compression.\n"
+		"                  default varies based on type.\n"
+		" -m MMB:          set max amount of memory to use for in-memory sorting, in megabytes.\n"
+		" -p:              preserve empty dns/dnssec files.\n"
+		" -r:              emit rdata and rdata_name_rev dnstable entries for soa rname field.\n"
+		" -s NAME:         nmsg source information to include in output if input is stdin.\n"
+		" -s:              include nmsg source information in output.\n"
+		" -t COUNT:        set size of mtbl thread pool for sorting and writing.\n",
+		DNS_MTBL_BLOCK_SIZE, DNSSEC_MTBL_BLOCK_SIZE);
 }
 
 int
@@ -1045,6 +1046,7 @@ main(int argc, char **argv)
 	mtbl_compression_type compression = MTBL_COMPRESSION_ZLIB;
 	int compression_level = DEFAULT_COMPRESSION_LEVEL;
 	int dns_block_size = DNS_MTBL_BLOCK_SIZE;
+	int dnssec_block_size = DNSSEC_MTBL_BLOCK_SIZE;
 	int thread_count = 0;
 	struct mtbl_threadpool *pool = NULL;
 	const char *name = argv[0];
@@ -1059,8 +1061,30 @@ main(int argc, char **argv)
 		switch(c) {
 		case 'b':
 			dns_block_size = strtol(optarg, &end, 10);
-			if (*end != '\0' || dns_block_size < 1) {
-				fprintf(stderr, "Invalid DNS block size '%s'\n", optarg);
+			switch(*end) {
+				char *new_end;
+
+				case '\0':
+					break;
+				case ',':
+					new_end = end + 1;
+					dnssec_block_size = strtol(new_end, &end, 10);
+					if (*end == '\0' && new_end != end)
+						break;
+					/* Intentional fallthrough */
+				default:
+					fprintf(stderr, "Malformed block size '%s'\n", optarg);
+					usage(name);
+					return (EXIT_FAILURE);
+			}
+
+			if (dns_block_size < 1) {
+				fprintf(stderr, "Invalid DNS block size '%d'\n", dns_block_size);
+				usage(name);
+				return (EXIT_FAILURE);
+			}
+			if (dnssec_block_size < 1) {
+				fprintf(stderr, "Invalid DNSSEC block size '%d'\n", dnssec_block_size);
 				usage(name);
 				return (EXIT_FAILURE);
 			}
@@ -1150,7 +1174,7 @@ main(int argc, char **argv)
 	init_nmsg();
 
 	pool = mtbl_threadpool_init(thread_count);
-	init_mtbl(compression, compression_level, dns_block_size, pool, (size_t)mmb);
+	init_mtbl(compression, compression_level, dns_block_size, dnssec_block_size, pool, (size_t)mmb);
 
 	nmsg_timespec_get(&start_time);
 	do_read();
