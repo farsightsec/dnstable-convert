@@ -1,3 +1,13 @@
+dnstable-convert (0.14.0)
+
+  * dnstable_convert: Add -t <COUNT> option to specify the maximum number of
+  threads to use for the internal MTBL writer and sorter.
+
+  * dnstable_convert: Add -b <DNS_BSIZE[,DNSSEC_BSIZE]> option to set
+  DNS (and optionally DNSSEC) data block size.
+
+ -- Farsight Security Inc <software@farsightsecurity.com>  Tue, 30 July 2024 13:14:15 -0800
+
 dnstable-convert (0.13.0)
 
   * Add optional generation of source information metadata.

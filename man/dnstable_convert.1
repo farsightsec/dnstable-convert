@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: dnstable_convert
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 01/26/2024
+.\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 07/30/2024
 .\"    Manual: \ \&
 .\"    Source: \ \&
 .\"  Language: English
 .\"
-.TH "DNSTABLE_CONVERT" "1" "01/26/2024" "\ \&" "\ \&"
+.TH "DNSTABLE_CONVERT" "1" "07/30/2024" "\ \&" "\ \&"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 dnstable_convert \- convert passive DNS NMSG data to dnstable MTBL format
 .SH "SYNOPSIS"
 .sp
-\fBdnstable_convert\fR [\fB\-DprS\fR] [\fB\-c TYPE\fR] [\fB\-l LEVEL\fR] [\fB\-m #\fR] [\fB\-s NAME\fR] \fINMSG\-FILE\fR \fIDB\-DNS\-FILE\fR \fIDB\-DNSSEC\-FILE\fR
+\fBdnstable_convert\fR [\fB\-DprS\fR] [\fB\-b DNS_BSIZE[,DNSSEC_BSIZE]\fR] [\fB\-c TYPE\fR] [\fB\-l LEVEL\fR] [\fB\-m #\fR] [\fB\-s NAME\fR] [\fB\-t COUNT\fR] \fINMSG\-FILE\fR \fIDB\-DNS\-FILE\fR \fIDB\-DNSSEC\-FILE\fR
 .SH "DESCRIPTION"
 .sp
 Converts passive DNS data from NMSG format to MTBL format\&. The input NMSG data in \fINMSG\-FILE\fR must be encoded using the SIE/dnsdedupe message schema, and the output data will be written to two separate MTBL files: the \fIDB\-DNS\-FILE\fR containing "plain" DNS records, and the \fIDB\-DNSSEC\-FILE\fR, containing DNSSEC\-related records\&.
@@ -50,6 +50,11 @@ By default, \fBdnstable_convert\fR will use \fB/var/tmp/\fR to store temporary m
 \fB\-D\fR
 .RS 4
 This flag enables a transitional compatibility mode described above\&.
+.RE
+.PP
+\fB\-b DNS_BSIZE[,DNSSEC_BSIZE]\fR
+.RS 4
+Produce the DNS MTBL output file using a data block size of DNS_BSIZE bytes, optionally producing the DNSSEC MTBL output file using a data block size of DNSSEC_BSIZE\&.
 .RE
 .PP
 \fB\-c TYPE\fR
@@ -86,4 +91,9 @@ Source metadata to include in output\&. Required if input is stdin, otherwise de
 \fB\-S\fR
 .RS 4
 Include nmsg source information in output\&.
+.RE
+.PP
+\fB\-t COUNT\fR
+.RS 4
+Use an MTBL thread pool of COUNT worker threads for sorting and writing (default is zero)\&.
 .RE
