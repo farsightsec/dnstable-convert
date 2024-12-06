@@ -245,5 +245,60 @@ else
   exitcode=1
 fi
 
+rm -f @abs_builddir@/threaded.dns.mtbl
+rm -f @abs_builddir@/unthreaded.dns.mtbl
+
+# mtbl version 1.7.0 introduced the -t THREADCOUNT and -b BLOCKSIZE options for
+# the mtbl_merge utility.  These tests ensure that both options work as intended.
+
+echo -n "verify dnstable_convert -t option does not change output: "
+$DNSTABLE_CONVERT -t 10 @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg @abs_builddir@/threaded.dns.mtbl @abs_builddir@/threaded.dnssec.mtbl 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output4.tmp
+$DNSTABLE_CONVERT @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg @abs_builddir@/unthreaded.dns.mtbl @abs_builddir@/unthreaded.dnssec.mtbl 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output5.tmp
+cmp -s @abs_builddir@/threaded.dns.mtbl @abs_builddir@/unthreaded.dns.mtbl
+if [ "$?" -eq 0 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+rm -f @abs_builddir@/new_blocksize.dns.mtbl
+rm -f @abs_builddir@/new_blocksize.dnssec.mtbl
+rm -f @abs_builddir@/blocksize.dns.mtbl
+rm -f @abs_builddir@/blocksize.dnssec.mtbl
+
+echo -n "verify dnstable_convert -b option modifies output DNS block size: "
+$DNSTABLE_CONVERT -b 65536 @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg @abs_builddir@/new_blocksize.dns.mtbl @abs_builddir@/new_blocksize.dnssec.mtbl 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output6.tmp
+$DNSTABLE_CONVERT @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg @abs_builddir@/blocksize.dns.mtbl @abs_builddir@/blocksize.dnssec.mtbl 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output7.tmp
+cmp -s @abs_builddir@/new_blocksize.dns.mtbl @abs_builddir@/blocksize.dns.mtbl
+if [ "$?" -eq 1 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+rm -f @abs_builddir@/new_blocksize.dns.mtbl
+rm -f @abs_builddir@/new_blocksize.dnssec.mtbl
+rm -f @abs_builddir@/blocksize.dns.mtbl
+rm -f @abs_builddir@/blocksize.dnssec.mtbl
+
+set -x
+
+echo -n "verify dnstable_convert -b option modifies output DNSSEC block size: "
+$DNSTABLE_CONVERT -b 8192,65536 @abs_builddir@/dnssec.nmsg @abs_builddir@/new_blocksize.dns.mtbl @abs_builddir@/new_blocksize.dnssec.mtbl
+#2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output6.tmp
+$DNSTABLE_CONVERT @abs_builddir@/dnssec.nmsg @abs_builddir@/blocksize.dns.mtbl @abs_builddir@/blocksize.dnssec.mtbl
+#2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output7.tmp
+cmp -s @abs_builddir@/new_blocksize.dnssec.mtbl @abs_builddir@/blocksize.dnssec.mtbl
+if [ "$?" -eq 1 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+exitcode=1
+
 exit $exitcode
 
