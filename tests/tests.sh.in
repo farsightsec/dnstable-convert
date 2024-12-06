@@ -5,9 +5,11 @@
 
 LANG=C	# consistent sort
 
-# This requires two tools from dnstable.
+# This requires two tools from dnstable and one from mtbl.
 DNSTABLE_LOOKUP=${DNSTABLE_LOOKUP:-dnstable_lookup}
 DNSTABLE_DUMP=${DNSTABLE_DUMP:-dnstable_dump}
+MTBL_INFO=${MTBL_INFO:-mtbl_info}
+MTBL_DUMP=${MTBL_DUMP:-mtbl_dump}
 
 DNSTABLE_CONVERT=@abs_top_builddir@/dnstable_convert
 DNSTABLE_UNCONVERT=@abs_top_builddir@/dnstable_unconvert
@@ -18,7 +20,8 @@ echo Create a dnstable mtbl file with SRV and SOA records and make sure
 echo it works for forward rrset and reverse rdata dumps and a rdata name
 echo lookup.
 
-rm -f @abs_builddir@/srv_soa.dns.mtbl
+srv_soa_mtbl="@abs_builddir@/srv_soa.dns.mtbl.tmp"
+rm -f $srv_soa_mtbl
 
 # strip system info from dnstable_convert output
 strip_env_info()
@@ -40,7 +43,7 @@ strip_env_info()
 echo -n "dnstable_convert of a SRV and SOA record set to mtbl: "
 # NOTE: no DNSSEC records so the dnssec file will be created and removed
 # strip off the timing for comparison
-$DNSTABLE_CONVERT @abs_srcdir@/srv_soa.dnsdedupe.nmsg @abs_builddir@/srv_soa.dns.mtbl foo.dnssec.mtbl 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output1.tmp
+$DNSTABLE_CONVERT @abs_srcdir@/srv_soa.dnsdedupe.nmsg $srv_soa_mtbl foo.dnssec.mtbl 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output1.tmp
 cmp -s @abs_srcdir@/dnstable_convert.output1 @abs_builddir@/dnstable_convert.output1.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -50,7 +53,7 @@ else
 fi
 
 echo -n "verify SRV and SOA record set from rrset dump: "
-$DNSTABLE_DUMP -r @abs_builddir@/srv_soa.dns.mtbl > @abs_builddir@/dnstable_dump.rrset.output1.tmp
+$DNSTABLE_DUMP -r $srv_soa_mtbl > @abs_builddir@/dnstable_dump.rrset.output1.tmp
 cmp -s @abs_srcdir@/dnstable_dump.rrset.output1 @abs_builddir@/dnstable_dump.rrset.output1.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -60,7 +63,7 @@ else
 fi
 
 echo -n "verify SRV and SOA record set from rdata dump: "
-$DNSTABLE_DUMP -d @abs_builddir@/srv_soa.dns.mtbl > @abs_builddir@/dnstable_dump.rdata.output1.tmp
+$DNSTABLE_DUMP -d $srv_soa_mtbl > @abs_builddir@/dnstable_dump.rdata.output1.tmp
 cmp -s @abs_srcdir@/dnstable_dump.rdata.output1 @abs_builddir@/dnstable_dump.rdata.output1.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -70,7 +73,7 @@ else
 fi
 
 echo -n "verify SRV record set works for rdata lookup: "
-DNSTABLE_FNAME=@abs_builddir@/srv_soa.dns.mtbl $DNSTABLE_LOOKUP rdata name "*.example.net." SRV > @abs_builddir@/dnstable_lookup.rdata.name.srv.output1.tmp 2>&1
+DNSTABLE_FNAME=$srv_soa_mtbl $DNSTABLE_LOOKUP rdata name "*.example.net." SRV > @abs_builddir@/dnstable_lookup.rdata.name.srv.output1.tmp 2>&1
 cmp -s @abs_srcdir@/dnstable_lookup.rdata.name.srv.output1 @abs_builddir@/dnstable_lookup.rdata.name.srv.output1.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -80,7 +83,7 @@ else
 fi
 
 echo -n "verify SOA record set works for rdata lookup: "
-DNSTABLE_FNAME=@abs_builddir@/srv_soa.dns.mtbl $DNSTABLE_LOOKUP rdata name "*.icann.org" SOA > @abs_builddir@/dnstable_lookup.rdata.name.soa.output1.tmp 2>&1
+DNSTABLE_FNAME=$srv_soa_mtbl $DNSTABLE_LOOKUP rdata name "*.icann.org" SOA > @abs_builddir@/dnstable_lookup.rdata.name.soa.output1.tmp 2>&1
 cmp -s @abs_srcdir@/dnstable_lookup.rdata.name.soa.output1 @abs_builddir@/dnstable_lookup.rdata.name.soa.output1.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -154,10 +157,11 @@ echo The dnstable_unconvert rdata will be sorted.
 # sort in increasing length of hostname, and within the same length,
 # increasing preference.
 
-rm -f @abs_builddir@/unordered-rdata.dnsdedupe.dns.mtbl
+unordered_rdata_dns="@abs_builddir@/unordered-rdata.dnsdedupe.dns.mtbl.tmp"
+rm -f $unordered_rdata_dns
 
 echo -n "dnstable_convert of an unsorted A and MX record set to mtbl: "
-$DNSTABLE_CONVERT @abs_srcdir@/unordered-rdata.dnsdedupe.json.nmsg @abs_builddir@/unordered-rdata.dnsdedupe.dns.mtbl foo.dnssec.mtbl 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output2.tmp
+$DNSTABLE_CONVERT @abs_srcdir@/unordered-rdata.dnsdedupe.json.nmsg $unordered_rdata_dns foo.dnssec.mtbl 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output2.tmp
 cmp -s @abs_srcdir@/dnstable_convert.output2 @abs_builddir@/dnstable_convert.output2.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -167,7 +171,7 @@ else
 fi
 
 echo -n "verify unsorted A and MX record sets from rrset dump: "
-$DNSTABLE_DUMP -r @abs_builddir@/unordered-rdata.dnsdedupe.dns.mtbl > @abs_builddir@/dnstable_dump.rrset.output3.tmp
+$DNSTABLE_DUMP -r $unordered_rdata_dns > @abs_builddir@/dnstable_dump.rrset.output3.tmp
 cmp -s @abs_srcdir@/dnstable_dump.rrset.output3 @abs_builddir@/dnstable_dump.rrset.output3.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -177,7 +181,7 @@ else
 fi
 
 echo -n "verify A and MX record sets from rdata dump: "
-$DNSTABLE_DUMP -d @abs_builddir@/unordered-rdata.dnsdedupe.dns.mtbl > @abs_builddir@/dnstable_dump.rdata.output3.tmp
+$DNSTABLE_DUMP -d $unordered_rdata_dns > @abs_builddir@/dnstable_dump.rdata.output3.tmp
 cmp -s @abs_srcdir@/dnstable_dump.rdata.output3 @abs_builddir@/dnstable_dump.rdata.output3.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -186,10 +190,11 @@ else
   exitcode=1
 fi
 
-rm -f @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg
+ordered_rdata_nmsg="@abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg.tmp"
+rm -f $ordered_rdata_nmsg
 
 echo -n "dnstable_unconvert of an A and MX record set from mtbl to nmsg: "
-$DNSTABLE_UNCONVERT @abs_builddir@/unordered-rdata.dnsdedupe.dns.mtbl @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg 2>&1 | sed -E -e "s;^processed 2 RRSets in [0-9]+\.[0-9][0-9] sec, [0-9,]+ rrsets/sec$;processed 2 RRSets in 0.00 sec, 24997 rrsets/sec;" -e "s;^Reading RRSets from @abs_builddir@/unordered-rdata.dnsdedupe.dns.mtbl into nmsg file @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg$;Reading RRsets from unordered-rdata.dnsdedupe.dns.mtbl into nmsg file ordered-rdata.dnsdedupe.dns.nmsg;" | sort -f > @abs_builddir@/dnstable_unconvert.output1.tmp
+$DNSTABLE_UNCONVERT $unordered_rdata_dns $ordered_rdata_nmsg 2>&1 | sed -E -e "s;^processed 2 RRSets in [0-9]+\.[0-9][0-9] sec, [0-9,]+ rrsets/sec$;processed 2 RRSets in 0.00 sec, 24997 rrsets/sec;" -e "s;^Reading RRSets from $unordered_rdata_dns into nmsg file $ordered_rdata_nmsg$;Reading RRsets from unordered-rdata.dnsdedupe.dns.mtbl into nmsg file ordered-rdata.dnsdedupe.dns.nmsg;" | sort -f > @abs_builddir@/dnstable_unconvert.output1.tmp
 cmp -s @abs_srcdir@/dnstable_unconvert.output1 @abs_builddir@/dnstable_unconvert.output1.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -202,10 +207,13 @@ fi
 # Instead of using nmsgtool as a dependency
 # just use dnstable_convert again and dnstable_dump again.
 
-rm -f @abs_builddir@/ordered-rdata.dnsdedupe.dns.mtbl @abs_builddir@/ordered-rdata.dnsdedupe.dnssec.mtbl
+ordered_rdata_dns="@abs_builddir@/ordered-rdata.dnsdedupe.dns.mtbl.tmp"
+ordered_rdata_dnssec="@abs_builddir@/ordered-rdata.dnsdedupe.dnssec.mtbl.tmp"
+rm -f $ordered_rdata_dns
+rm -f $ordered_rdata_dnssec
 
 echo -n "dnstable_convert of sorted A and MX record set to mtbl: "
-$DNSTABLE_CONVERT -p @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg @abs_builddir@/ordered-rdata.dnsdedupe.dns.mtbl @abs_builddir@/ordered-rdata.dnsdedupe.dnssec.mtbl 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output3.tmp
+$DNSTABLE_CONVERT -p $ordered_rdata_nmsg $ordered_rdata_dns $ordered_rdata_dnssec 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output3.tmp
 cmp -s @abs_srcdir@/dnstable_convert.output3 @abs_builddir@/dnstable_convert.output3.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -215,7 +223,7 @@ else
 fi
 
 echo -n "confirm dnstable_convert -p leaves dnssec mtbl file with no records: "
-$DNSTABLE_DUMP -r @abs_builddir@/ordered-rdata.dnsdedupe.dnssec.mtbl > @abs_builddir@/dnstable_dump.rrset.output4.tmp 2>&1
+$DNSTABLE_DUMP -r $ordered_rdata_dnssec > @abs_builddir@/dnstable_dump.rrset.output4.tmp 2>&1
 if [ ! -s "@abs_builddir@/dnstable_dump.rrset.output4.tmp" ]; then
   echo PASS
 else
@@ -224,7 +232,7 @@ else
 fi
 
 echo -n "verify sorted A and MX record sets from rrset dump: "
-$DNSTABLE_DUMP -r @abs_builddir@/ordered-rdata.dnsdedupe.dns.mtbl > @abs_builddir@/dnstable_dump.rrset.output5.tmp
+$DNSTABLE_DUMP -r $ordered_rdata_dns > @abs_builddir@/dnstable_dump.rrset.output5.tmp
 cmp -s @abs_srcdir@/dnstable_dump.rrset.output5 @abs_builddir@/dnstable_dump.rrset.output5.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -236,7 +244,7 @@ fi
 # this rdata dump is sorted already
 # so compare it with sorted template 3 already used previously
 echo -n "verify A and MX record sets from rdata dump: "
-$DNSTABLE_DUMP -d @abs_builddir@/ordered-rdata.dnsdedupe.dns.mtbl > @abs_builddir@/dnstable_dump.rdata.output4.tmp
+$DNSTABLE_DUMP -d $ordered_rdata_dns > @abs_builddir@/dnstable_dump.rdata.output4.tmp
 cmp -s @abs_srcdir@/dnstable_dump.rdata.output3 @abs_builddir@/dnstable_dump.rdata.output4.tmp
 if [ "$?" -eq 0 ] ; then
   echo PASS
@@ -245,5 +253,89 @@ else
   exitcode=1
 fi
 
-exit $exitcode
+threaded="@abs_builddir@/threaded.dns.mtbl.tmp"
+unthreaded="@abs_builddir@/unthreaded.dns.mtbl.tmp"
 
+rm -f $threaded
+rm -f $unthreaded
+
+# mtbl version 1.7.0 introduced the -t THREADCOUNT and -b BLOCKSIZE options for
+# the mtbl_merge utility.  The following 3 test cases check that both options
+# work as intended.
+
+# Verify that dnstable_convert output does not change when the -t option is specified.
+echo -n "verify dnstable_convert -t option does not change output: "
+$DNSTABLE_CONVERT -t 10 @abs_srcdir@/thread-test.nmsg $threaded @abs_builddir@/threaded.dnssec.mtbl.tmp 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output4.tmp
+$DNSTABLE_CONVERT @abs_srcdir@/thread-test.nmsg $unthreaded @abs_builddir@/unthreaded.dnssec.mtbl.tmp 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output5.tmp
+cmp -s $threaded $unthreaded
+
+if [ "$?" -eq 0 ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+# 4 files we will be using for the next test case.
+set_dns_blocksize0="@abs_builddir@/blocksize0.dns.mtbl.tmp"
+set_dnssec_blocksize0="@abs_builddir@/blocksize0.dnssec.mtbl.tmp"
+default_dns_blocksize0="@abs_builddir@/default_blocksize0.dns.mtbl.tmp"
+default_dnssec_blocksize0="@abs_builddir@/default_blocksize0.dnssec.mtbl.tmp"
+rm -f $set_dns_blocksize0
+rm -f $set_dnssec_blocksize0
+rm -f $default_dns_blocksize0
+rm -f $default_dnssec_blocksize0
+
+# Verify that the output DNS block size (specified via -b) is as expected.
+echo -n "verify dnstable_convert -b option modifies output DNS block size: "
+$DNSTABLE_CONVERT -b 12345 $ordered_rdata_nmsg $set_dns_blocksize0 $set_dnssec_blocksize0 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output6.tmp
+$DNSTABLE_CONVERT $ordered_rdata_nmsg $default_dns_blocksize0 $default_dnssec_blocksize0 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output7.tmp
+default_blocksize0=$($MTBL_INFO $default_dns_blocksize0 | awk '/^data block size:/{print $4}')
+blocksize0=$($MTBL_INFO $set_dns_blocksize0 | awk '/^data block size:/{print $4}')
+
+# Compare mtbl_dump output for each file to ensure key/value pairs are identical.
+set_blocksize_dump="@abs_builddir@/set_dns_blocksize_dump.tmp"
+default_blocksize_dump="@abs_builddir@/default_dns_blocksize_dump.tmp"
+$($MTBL_DUMP $default_dns_blocksize0) > $default_blocksize_dump
+$($MTBL_DUMP $set_dns_blocksize0) > $set_blocksize_dump
+cmp -s "$set_blocksize_dump" "$default_blocksize_dump"
+
+if [ "$?" -eq 0 -a "$blocksize0" -eq 12345 -a "$default_blocksize0" -ne "$blocksize0" ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+# 4 files we will be using for the next test case.
+set_dns_blocksize1="@abs_builddir@/blocksize1.dns.mtbl.tmp"
+set_dnssec_blocksize1="@abs_builddir@/blocksize1.dnssec.mtbl.tmp"
+default_dns_blocksize1="@abs_builddir@/default_blocksize1.dns.mtbl.tmp"
+default_dnssec_blocksize1="@abs_builddir@/default_blocksize1.dnssec.mtbl.tmp"
+rm -f $set_dns_blocksize1
+rm -f $set_dnssec_blocksize1
+rm -f $default_dns_blocksize1
+rm -f $default_dnssec_blocksize1
+
+# Verify that the output DNSSEC block size (specified via -b) is as expected.
+echo -n "verify dnstable_convert -b option modifies output DNSSEC block size: "
+$DNSTABLE_CONVERT -b 12345,12345 @abs_srcdir@/dnssec.nmsg $set_dns_blocksize1 $set_dnssec_blocksize1 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output8.tmp
+$DNSTABLE_CONVERT @abs_srcdir@/dnssec.nmsg $default_dns_blocksize1 $default_dnssec_blocksize1 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output9.tmp
+default_blocksize1=$($MTBL_INFO $default_dnssec_blocksize1 | awk '/^data block size:/{print $4}')
+blocksize1=$($MTBL_INFO $set_dnssec_blocksize1 | awk '/^data block size:/{print $4}')
+
+# Compare mtbl_dump output for each file to ensure key/value pairs are identical.
+set_blocksize_dump="@abs_builddir@/set_dnssec_blocksize_dump.tmp"
+default_blocksize_dump="@abs_builddir@/default_dnssec_blocksize_dump.tmp"
+$($MTBL_DUMP $default_dnssec_blocksize1) > $default_blocksize_dump
+$($MTBL_DUMP $set_dnssec_blocksize1) > $set_blocksize_dump
+cmp -s "$set_blocksize_dump" "$default_blocksize_dump"
+
+if [ "$?" -eq 0 -a "$blocksize1" -eq 12345 -a "$default_blocksize1" -ne "$blocksize1" ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+exit $exitcode
