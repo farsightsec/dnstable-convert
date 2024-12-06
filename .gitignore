@@ -13,8 +13,11 @@
 /configure
 /libtool
 /stamp-h1
+/tests/*.tmp
+configure~
+dnstable_convert
+dnstable_unconvert
 Makefile
 Makefile.in
 TAGS
-dnstable_convert
-dnstable_unconvert
+test-suite.log
