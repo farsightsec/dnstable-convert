@@ -1,3 +1,13 @@
+dnstable-convert (0.14.0-1) debian-fsi; urgency=medium
+
+  * dnstable_convert: Add -t <COUNT> option to specify the maximum number of
+  threads to use for the internal MTBL writer and sorter.
+
+  * dnstable_convert: Add -b <DNS_BSIZE[,DNSSEC_BSIZE]> option to set
+  DNS (and optionally DNSSEC) data block size.
+
+ -- Farsight Security Inc <software@farsightsecurity.com>  Fri, 06 Dec 2024 15:58:59 -0500
+
 dnstable-convert (0.13.0-1) debian-fsi; urgency=medium
 
   * Add optional generation of source information metadata.
