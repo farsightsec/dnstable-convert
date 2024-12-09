@@ -6,7 +6,7 @@ dnstable_convert - convert passive DNS NMSG data to dnstable MTBL format
 
 == SYNOPSIS ==
 
-^dnstable_convert^ [^-DprS^] [^-c TYPE^] [^-l LEVEL^] [^-m #^] [^-s NAME^] 'NMSG-FILE' 'DB-DNS-FILE' 'DB-DNSSEC-FILE'
+^dnstable_convert^ [^-DprS^] [^-b DNS_BSIZE[,DNSSEC_BSIZE]^] [^-c TYPE^] [^-l LEVEL^] [^-m #^] [^-s NAME^] [^-t COUNT^] 'NMSG-FILE' 'DB-DNS-FILE' 'DB-DNSSEC-FILE'
 
 == DESCRIPTION ==
 
@@ -48,6 +48,11 @@ be useful.
 ^-D^::
     This flag enables a transitional compatibility mode described above.
 
+^-b DNS_BSIZE[,DNSSEC_BSIZE]^::
+    Produce the DNS MTBL output file using a data block size of DNS_BSIZE bytes,
+    optionally producing the DNSSEC MTBL output file using a data block size of
+    DNSSEC_BSIZE.
+
 ^-c TYPE^::
     Use TYPE compression (Default: zlib).
 
@@ -71,3 +76,6 @@ be useful.
 
 ^-S^::
     Include nmsg source information in output.
+
+^-t COUNT^::
+    Use an MTBL thread pool of COUNT worker threads for sorting and writing (default is zero).

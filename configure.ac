@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT([dnstable-convert], [0.13.0])
+AC_INIT([dnstable-convert], [0.14.0])
 AC_CONFIG_SRCDIR([dnstable_convert.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability silent-rules subdir-objects])
@@ -25,7 +25,7 @@ AC_CHECK_HEADERS([sys/endian.h endian.h])
 
 PKG_CHECK_MODULES([libdnstable], [libdnstable])
 PKG_CHECK_MODULES([libnmsg], [libnmsg])
-PKG_CHECK_MODULES([libmtbl], [libmtbl])
+PKG_CHECK_MODULES([libmtbl], [libmtbl >= 1.7.0])
 PKG_CHECK_MODULES([libwdns], [libwdns])
 
 CPPFLAGS_SAVED=$CPPFLAGS
