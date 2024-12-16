@@ -1017,6 +1017,23 @@ init_mtbl(mtbl_compression_type compression, int level, size_t dns_block_size,
 	mtbl_writer_options_destroy(&wopt);
 }
 
+static bool
+parse_long(const char *str, long int *val)
+{
+	char *endptr;
+
+	errno = 0;
+	*val = strtol(str, &endptr, 0);
+
+	if ((errno == ERANGE && (*val == LONG_MAX || *val == LONG_MIN))
+	    || (errno != 0 && *val == 0))
+	{
+		return false;
+	}
+
+	return (*endptr == '\0');
+}
+
 static void
 usage(const char *name)
 {
@@ -1043,11 +1060,11 @@ int
 main(int argc, char **argv)
 {
 	long mmb = 0;
+	long thread_count = 0;
 	mtbl_compression_type compression = MTBL_COMPRESSION_ZLIB;
-	int compression_level = DEFAULT_COMPRESSION_LEVEL;
+	long compression_level = DEFAULT_COMPRESSION_LEVEL;
 	int dns_block_size = DNS_MTBL_BLOCK_SIZE;
 	int dnssec_block_size = DNSSEC_MTBL_BLOCK_SIZE;
-	int thread_count = 0;
 	struct mtbl_threadpool *pool = NULL;
 	const char *name = argv[0];
 	int c;
@@ -1101,24 +1118,21 @@ main(int argc, char **argv)
 			}
 			break;
 		case 'l':
-			compression_level = strtol(optarg, &end, 10);
-			if (*end != '\0') {
+			if (!parse_long(optarg, &compression_level)) {
 				fprintf(stderr, "Invalid compression level '%s'\n", optarg);
 				usage(name);
 				return (EXIT_FAILURE);
 			}
 			break;
 		case 'm':
-			mmb = strtol(optarg, &end, 10);
-			if (*end != '\0' || mmb <= 0) {
+			if (!parse_long(optarg, &mmb) || mmb < 1) {
 				fprintf(stderr, "Invalid max mega bytes '%s'\n", optarg);
 				usage(name);
 				return (EXIT_FAILURE);
 			}
 			break;
 		case 't':
-			thread_count = strtol(optarg, &end, 10);
-			if (*end != '\0' || thread_count < 0) {
+			if (!parse_long(optarg, &thread_count) || thread_count < 0) {
 				fprintf(stderr, "Invalid thread count '%s'\n", optarg);
 				usage(name);
 				return (EXIT_FAILURE);
