@@ -1118,6 +1118,12 @@ main(int argc, char **argv)
 			break;
 		case 't':
 			thread_count = strtol(optarg, &end, 10);
+			/* If end == optarg, then optarg is either non-numeric or negative. */
+			if (end == optarg) {
+				fprintf(stderr, "Invalid thread count value '%s'\n", optarg);
+				usage(name);
+				return (EXIT_FAILURE);
+			}
 			if (*end != '\0' || thread_count < 0) {
 				fprintf(stderr, "Invalid thread count '%s'\n", optarg);
 				usage(name);
