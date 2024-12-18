@@ -272,7 +272,6 @@ rm -f $new_dnssec_blocksize
 rm -f $dns_blocksize
 rm -f $dnssec_blocksize
 
-set -x
 echo -n "verify dnstable_convert -b option modifies output DNS block size: "
 $DNSTABLE_CONVERT -b 256 @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg $new_dns_blocksize $new_dnssec_blocksize 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output6.tmp
 $DNSTABLE_CONVERT @abs_builddir@/ordered-rdata.dnsdedupe.dns.nmsg $dns_blocksize $dnssec_blocksize 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output7.tmp
@@ -290,10 +289,8 @@ rm -f $dns_blocksize
 rm -f $dnssec_blocksize
 
 echo -n "verify dnstable_convert -b option modifies output DNSSEC block size: "
-$DNSTABLE_CONVERT -b 256,256 @abs_builddir@/dnssec.nmsg $new_dns_blocksize $new_dnssec_blocksize
-#2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output6.tmp
-$DNSTABLE_CONVERT @abs_builddir@/dnssec.nmsg $dns_blocksize $dnssec_blocksize
-#2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output7.tmp
+$DNSTABLE_CONVERT -b 256,256 @abs_builddir@/dnssec.nmsg $new_dns_blocksize $new_dnssec_blocksize 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output6.tmp
+$DNSTABLE_CONVERT @abs_builddir@/dnssec.nmsg $dns_blocksize $dnssec_blocksize 2>&1 | strip_env_info | sort -f > @abs_builddir@/dnstable_convert.output7.tmp
 cmp -s $new_dnssec_blocksize $dnssec_blocksize
 if [ "$?" -eq 1 -a -s $new_dnssec_blocksize -a -s $dnssec_blocksize -a ! -f $new_dns_blocksize -a ! -f $dns_blocksize ] ; then
   echo PASS
