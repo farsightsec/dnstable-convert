@@ -1132,7 +1132,7 @@ main(int argc, char **argv)
 			}
 			break;
 		case 't':
-			if (!parse_long(optarg, &thread_count) || thread_count < 1) {
+			if (!parse_long(optarg, &thread_count) || thread_count < 0) {
 				fprintf(stderr, "Invalid thread count '%s'\n", optarg);
 				usage(name);
 				return (EXIT_FAILURE);
