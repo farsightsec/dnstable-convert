@@ -99,6 +99,7 @@ static uint64_t			max_time_last_dnssec;
 
 static struct timespec		start_time;
 static uint64_t			count_messages;
+static uint64_t			count_skipped;
 static uint64_t			count_entries_dns;
 static uint64_t			count_entries_dnssec;
 /* Count merged entries correctly even when MTBL multithreading is enabled. */
@@ -223,11 +224,12 @@ do_stats(void)
 	fd = dup(2);
 
 	fprintf(stderr, "processed "
-			"%'" PRIu64 " messages, "
+	        "%'" PRIu64 " messages (%'" PRIu64 " skipped), "
 			"%'" PRIu64 " DNS entries, %'" PRIu64 " DNSSEC entries, %'" PRIu64 " merged "
 			"in %'.2f sec, %'d msg/sec, %'d ent/sec, fd=%d"
 			"\n",
 		count_messages,
+		count_skipped,
 		count_entries_dns,
 		count_entries_dnssec,
 		atomic_load_explicit(&count_entries_merged, memory_order_relaxed),
@@ -806,11 +808,16 @@ do_read(void)
 
 		dns = (Nmsg__Sie__DnsDedupe *) nmsg_message_get_payload(msg);
 		assert(dns != NULL);
-		assert(dns->has_rrname);
-		assert(dns->rrname.len < 256);
-		assert(dns->has_rrtype);
-		assert(dns->has_bailiwick);
-		assert(dns->n_rdata > 0);
+
+		if (!dns->has_rrname || dns->rrname.len == 0 ||
+		    dns->rrname.len >= 256 ||
+		    !dns->has_rrtype ||
+		    !dns->has_bailiwick || dns->bailiwick.len == 0 ||
+		    dns->n_rdata == 0) {
+			nmsg_message_destroy(&msg);
+			count_skipped += 1;
+			continue;
+		}
 
 		process_rrset(dns, key, val);
 		process_rrset_name_fwd(dns, key, val);
