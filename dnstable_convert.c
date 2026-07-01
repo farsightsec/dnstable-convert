@@ -783,6 +783,7 @@ do_read(void)
 
 	for (;;) {
 		int32_t vid, msgtype;
+		bool some_skipped;
 
 		res = nmsg_input_read(input, &msg);
 		if (res == nmsg_res_eof)
@@ -809,15 +810,26 @@ do_read(void)
 		dns = (Nmsg__Sie__DnsDedupe *) nmsg_message_get_payload(msg);
 		assert(dns != NULL);
 
-		if (!dns->has_rrname || dns->rrname.len == 0 ||
-		    dns->rrname.len >= 256 ||
-		    !dns->has_rrtype ||
-		    !dns->has_bailiwick || dns->bailiwick.len == 0 ||
-		    dns->n_rdata == 0) {
-			nmsg_message_destroy(&msg);
-			count_skipped += 1;
-			continue;
-		}
+		#define SKIP_IF(cond, fmt, ...) \
+			do { if (cond) { \
+				fprintf(stderr, "skipping record: " fmt "\n", ##__VA_ARGS__); \
+				some_skipped = true; \
+			} } while (0)
+
+		SKIP_IF(!dns->has_rrname,        "missing rrname");
+		SKIP_IF(dns->rrname.len == 0,    "rrname is empty");
+		SKIP_IF(dns->rrname.len >= 256,  "rrname too long (%zu bytes)", (size_t)dns->rrname.len);
+		SKIP_IF(!dns->has_rrtype,        "missing rrtype");
+		SKIP_IF(!dns->has_bailiwick,     "missing bailiwick");
+		SKIP_IF(dns->bailiwick.len == 0, "bailiwick is empty");
+		SKIP_IF(dns->n_rdata == 0,       "n_rdata is 0");
+		#undef SKIP_IF
+
+		if (some_skipped) {
+            nmsg_message_destroy(&msg);
+            count_skipped += 1;
+            continue;
+        }
 
 		process_rrset(dns, key, val);
 		process_rrset_name_fwd(dns, key, val);
@@ -831,7 +843,7 @@ do_read(void)
 		nmsg_message_destroy(&msg);
 		count_messages += 1;
 
-		if ((count_messages % STATS_INTERVAL) == 0)
+		if (((count_messages + count_skipped) % STATS_INTERVAL) == 0)
 			do_stats();
 	}
 
@@ -843,6 +855,9 @@ do_read(void)
 	ubuf_destroy(&key);
 	ubuf_destroy(&val);
 	do_stats();
+
+	if (count_skipped >= 1)
+        exit(EXIT_FAILURE);
 }
 
 struct write_thread_ctx
