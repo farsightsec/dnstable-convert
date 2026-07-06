@@ -79,3 +79,6 @@ be useful.
 
 ^-t COUNT^::
     Use an MTBL thread pool of COUNT worker threads for sorting and writing (default is zero).
+
+^-k^::
+    Skip invalid input messages instead of exiting. Each such message is counted, and processing continues with the next message. A count of skipped messages is written to the stats when the input is exhausted.
