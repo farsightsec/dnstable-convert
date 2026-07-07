@@ -819,7 +819,7 @@ do_read(void)
 			} } while (0)
 
 		REQUIRE(dns->has_rrname,		"missing rrname");
-		REQUIRE(dns->rrname.len < 256,	"rrname too long (%zu bytes)", (size_t)dns->rrname.len);
+		REQUIRE(dns->rrname.len <= WDNS_MAXLEN_NAME,	"rrname too long (%zu bytes)", (size_t)dns->rrname.len);
 		REQUIRE(dns->has_rrtype,		"missing rrtype");
 		REQUIRE(dns->has_bailiwick,		"missing bailiwick");
 		REQUIRE(dns->n_rdata > 0,		"n_rdata is 0");
