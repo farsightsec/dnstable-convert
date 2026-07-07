@@ -823,7 +823,7 @@ do_read(void)
 		REQUIRE(dns->has_rrtype,		"missing rrtype");
 		REQUIRE(dns->has_bailiwick,		"missing bailiwick");
 		REQUIRE(dns->n_rdata > 0,		"n_rdata is 0");
-		#undef SKIP_IF
+		#undef REQUIRE
 
 		if (some_skipped) {
 			if (!skip_invalid_messages) {
