@@ -97,3 +97,8 @@ Include nmsg source information in output\&.
 .RS 4
 Use an MTBL thread pool of COUNT worker threads for sorting and writing (default is zero)\&.
 .RE
+.PP
+\fB\-k\fR
+.RS 4
+Skip invalid input messages instead of exiting. Each such message is counted, and processing continues with the next message. A count of skipped messages is written to the stats when the input is exhausted\&.
+.RE

@@ -85,6 +85,7 @@ static bool			store_nmsg_source_info = false; /* Store nmsg source info */
 static bool			migrate_dnssec;
 static bool			preserve_empty = false;	/* Keep empty dns files? */
 static bool			s_process_soa_rname = false;
+static bool			skip_invalid_messages = false;
 
 static nmsg_input_t		input;
 static struct mtbl_sorter	*sorter_dns;
@@ -99,6 +100,7 @@ static uint64_t			max_time_last_dnssec;
 
 static struct timespec		start_time;
 static uint64_t			count_messages;
+static uint64_t			count_skipped;
 static uint64_t			count_entries_dns;
 static uint64_t			count_entries_dnssec;
 /* Count merged entries correctly even when MTBL multithreading is enabled. */
@@ -223,11 +225,12 @@ do_stats(void)
 	fd = dup(2);
 
 	fprintf(stderr, "processed "
-			"%'" PRIu64 " messages, "
+			"%'" PRIu64 " messages (%'" PRIu64 " skipped), "
 			"%'" PRIu64 " DNS entries, %'" PRIu64 " DNSSEC entries, %'" PRIu64 " merged "
 			"in %'.2f sec, %'d msg/sec, %'d ent/sec, fd=%d"
 			"\n",
 		count_messages,
+		count_skipped,
 		count_entries_dns,
 		count_entries_dnssec,
 		atomic_load_explicit(&count_entries_merged, memory_order_relaxed),
@@ -781,6 +784,7 @@ do_read(void)
 
 	for (;;) {
 		int32_t vid, msgtype;
+		bool some_skipped = false;
 
 		res = nmsg_input_read(input, &msg);
 		if (res == nmsg_res_eof)
@@ -806,11 +810,30 @@ do_read(void)
 
 		dns = (Nmsg__Sie__DnsDedupe *) nmsg_message_get_payload(msg);
 		assert(dns != NULL);
-		assert(dns->has_rrname);
-		assert(dns->rrname.len < 256);
-		assert(dns->has_rrtype);
-		assert(dns->has_bailiwick);
-		assert(dns->n_rdata > 0);
+
+		#define REQUIRE(cond, fmt, ...) \
+			do { if (!(cond)) { \
+				fprintf(stderr, "dnstable_convert: invalid input: " \
+						fmt "\n", ##__VA_ARGS__); \
+				some_skipped = true; \
+			} } while (0)
+
+		REQUIRE(dns->has_rrname,		"missing rrname");
+		REQUIRE(dns->rrname.len <= WDNS_MAXLEN_NAME,	"rrname too long (%zu bytes)", (size_t)dns->rrname.len);
+		REQUIRE(dns->has_rrtype,		"missing rrtype");
+		REQUIRE(dns->has_bailiwick,		"missing bailiwick");
+		REQUIRE(dns->n_rdata > 0,		"n_rdata is 0");
+		#undef REQUIRE
+
+		if (some_skipped) {
+			if (!skip_invalid_messages) {
+				fprintf(stderr, "dnstable_convert: aborting on malformed input message\n");
+				exit(EXIT_FAILURE);
+			}
+			nmsg_message_destroy(&msg);
+			count_skipped += 1;
+			continue;
+		}
 
 		process_rrset(dns, key, val);
 		process_rrset_name_fwd(dns, key, val);
@@ -824,7 +847,7 @@ do_read(void)
 		nmsg_message_destroy(&msg);
 		count_messages += 1;
 
-		if ((count_messages % STATS_INTERVAL) == 0)
+		if (((count_messages + count_skipped) % STATS_INTERVAL) == 0)
 			do_stats();
 	}
 
@@ -1038,7 +1061,7 @@ static void
 usage(const char *name)
 {
 	fprintf(stderr, "Usage: %s [-D] [-p] [-r] [-S] [-b dns_bsize[,dnssec_bsize]] "
-			"[-c compression] [-l level] [-m megabytes] [-s name] [-t threads] "
+			"[-c compression] [-l level] [-m megabytes] [-s name] [-t threads] [-k] "
 			"<NMSG FILE> <DB FILE> <DB DNSSEC FILE>\n", name);
 
 	fprintf(stderr, "Options:\n"
@@ -1053,6 +1076,7 @@ usage(const char *name)
 		" -s NAME:         nmsg source information to include in output if input is stdin.\n"
 		" -s:              include nmsg source information in output.\n"
 		" -t COUNT:        set size of mtbl thread pool for sorting and writing.\n",
+		" -k:			   skip malformed input messages instead of aborting.\n",
 		DNS_MTBL_BLOCK_SIZE, DNSSEC_MTBL_BLOCK_SIZE);
 }
 
@@ -1071,7 +1095,7 @@ main(int argc, char **argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((c = getopt(argc, argv, "b:Dc:l:m:t:prSs:")) != -1) {
+	while ((c = getopt(argc, argv, "b:Dc:l:m:kt:prSs:")) != -1) {
 		mtbl_res res;
 		char *end;
 
@@ -1149,6 +1173,9 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			nmsg_source_info = optarg;
+			break;
+		case 'k':
+			skip_invalid_messages = true;
 			break;
 		case 'h':
 		case '?':
