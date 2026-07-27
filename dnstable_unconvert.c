@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -245,18 +246,18 @@ static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *dat
 	 *      INSERTION records.
 	 */
 
-#define decode(v) do {							\
+#define decode(TYPE, v) do {							\
 	unsigned vi_len = mtbl_varint_length_packed(data, len_data);	\
 	uint64_t vi_val;						\
 	assert(vi_len > 0);						\
 	len_data -= vi_len;						\
 	data += mtbl_varint_decode64(data, &vi_val);			\
-	v = (uint32_t)vi_val;						\
+	v = (TYPE)vi_val;						\
 } while(0)
 
-	decode(nm_time_first);
-	decode(nm_time_last);
-	decode(nm_count);
+	decode(uint32_t, nm_time_first);
+	decode(uint32_t, nm_time_last);
+	decode(uint64_t, nm_count);
 
 #undef decode
 
