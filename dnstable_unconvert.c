@@ -189,7 +189,8 @@ static nmsg_message_t entry_to_nmsg(struct dnstable_entry *e, const uint8_t *dat
 	dnstable_res dres;
 	nmsg_res nres;
 
-	uint32_t nm_time_first, nm_time_last, nm_count;
+	uint32_t nm_time_first, nm_time_last;
+	uint64_t nm_count;
 
 	nmsg_message_t m = nmsg_message_init(sie_dnsdedupe);
 	assert(m != NULL);
