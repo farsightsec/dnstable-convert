@@ -1,0 +1,1 @@
+{"time":"2026-07-28 14:20:58.861547128","vname":"SIE","mname":"dnsdedupe","message":{"type":"EXPIRATION","count":5000000005,"time_first":"2018-02-22 14:51:28","time_last":"2018-02-22 14:51:28","bailiwick":"example.net.","rrname":"example.net.","rrclass":"IN","rrtype":"SOA","rdata":["sns.dns.icann.org. noc.dns.icann.org. 2018013007 7200 3600 1209600 3600"]}}

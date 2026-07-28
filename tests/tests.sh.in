@@ -8,6 +8,7 @@ LANG=C	# consistent sort
 # This requires two tools from dnstable and one from mtbl.
 DNSTABLE_LOOKUP=${DNSTABLE_LOOKUP:-dnstable_lookup}
 DNSTABLE_DUMP=${DNSTABLE_DUMP:-dnstable_dump}
+NMSGTOOL=${NMSGTOOL:-nmsgtool}
 MTBL_INFO=${MTBL_INFO:-mtbl_info}
 MTBL_DUMP=${MTBL_DUMP:-mtbl_dump}
 
@@ -335,6 +336,64 @@ if [ "$?" -eq 0 -a "$blocksize1" -eq 12345 -a "$default_blocksize1" -ne "$blocks
   echo PASS
 else
   echo FAIL
+  exitcode=1
+fi
+
+echo
+echo Test dnstable_unconvert preserves counts larger than 32 bits.
+
+count_nmsg="@abs_builddir@/count.nmsg.tmp"
+count_dns="@abs_builddir@/count.dns.mtbl.tmp"
+count_dnssec="@abs_builddir@/count.dnssec.mtbl.tmp"
+count_roundtrip_nmsg="@abs_builddir@/count.roundtrip.nmsg.tmp"
+count_roundtrip_json="@abs_builddir@/count.roundtrip.json.tmp"
+count_expected=5000000005
+
+rm -f $count_nmsg $count_dns $count_dnssec \
+      $count_roundtrip_nmsg $count_roundtrip_json
+
+echo -n "json -> nmsg for big count record (nmsgtool -j): "
+$NMSGTOOL -j @abs_srcdir@/count.dnsdedupe.json -w $count_nmsg >/dev/null 2>&1
+if [ -s "$count_nmsg" ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+echo -n "dnstable_convert of big count record to mtbl: "
+$DNSTABLE_CONVERT $count_nmsg $count_dns $count_dnssec >/dev/null 2>&1
+if [ -s "$count_dns" ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+echo -n "dnstable_unconvert of big count record back to nmsg: "
+$DNSTABLE_UNCONVERT -z $count_dns $count_roundtrip_nmsg >/dev/null 2>&1
+if [ -s "$count_roundtrip_nmsg" ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+echo -n "nmsg -> json for round-tripped big count record (nmsgtool -J): "
+$NMSGTOOL -r $count_roundtrip_nmsg -J $count_roundtrip_json >/dev/null 2>&1
+if [ -s "$count_roundtrip_json" ] ; then
+  echo PASS
+else
+  echo FAIL
+  exitcode=1
+fi
+
+echo -n "verify count $count_expected survived round-trip without truncation: "
+count_actual=$(sed -n 's/.*"count"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' $count_roundtrip_json | head -1)
+if [ "$count_actual" = "$count_expected" ] ; then
+  echo PASS
+else
+  echo "FAIL (expected $count_expected, got '$count_actual')"
   exitcode=1
 fi
 

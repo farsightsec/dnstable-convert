@@ -1,6 +1,6 @@
 EXTRA_DIST = COPYRIGHT LICENSE README.md
 CLEANFILES =
-DISTCLEANFILES = 
+DISTCLEANFILES =
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
 AM_CPPFLAGS = -include $(top_builddir)/config.h
@@ -24,7 +24,7 @@ dnstable_convert_LDADD = \
 	$(libdnstable_LIBS) \
 	$(libmtbl_LIBS) \
 	$(libnmsg_LIBS) \
-	$(libwdns_LIBS) 
+	$(libwdns_LIBS)
 
 bin_PROGRAMS += dnstable_unconvert
 
@@ -36,7 +36,7 @@ dnstable_unconvert_LDADD = \
 	$(libdnstable_LIBS) \
 	$(libmtbl_LIBS) \
 	$(libnmsg_LIBS) \
-	$(libwdns_LIBS) 
+	$(libwdns_LIBS)
 
 
 if BUILD_MAN
@@ -80,6 +80,7 @@ EXTRA_DIST += \
 	tests/dnstable_lookup.rdata.name.soa.output1 \
 	tests/dnstable_lookup.rdata.name.srv.output1 \
 	tests/dnstable_unconvert.output1 \
+	tests/count.dnsdedupe.json \
 	tests/srv_soa.dnsdedupe.json \
 	tests/srv_soa.dnsdedupe.nmsg \
 	tests/thread-test.nmsg \
