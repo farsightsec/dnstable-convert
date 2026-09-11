@@ -7,7 +7,8 @@ Summary:        A utility for converting dnstable files to different formats
 License:        Apache-2.0
 URL:            https://github.com/farsightsec/dnstable-convert
 Source0:        https://dl.farsightsecurity.com/dist/dnstable-convert/%{name}-%{version}.tar.gz
-BuildRequires:  gcc make pkgconfig wdns-devel >= 0.11.0 mtbl-devel >= 1.5.0 libnmsg-devel nmsg-msg-module-sie-devel dnstable-devel
+BuildRequires:  autoconf automake libtool gcc make pkgconfig
+BuildRequires:  wdns-devel >= 0.11.0 mtbl-devel >= 1.5.0 libnmsg-devel nmsg-msg-module-sie-devel dnstable-devel
 Requires:       dnstable mtbl nmsg-msg-module-sie
 
 %description
